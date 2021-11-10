@@ -1,9 +1,9 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 const bcrypt = require('bcrypt');
-const { Post } = require('.Post');
+const { Post } = require('../models');
 const userSchema = new Schema(
     {
-        username: {
+        username: { 
             type: String,
             required: true,
             unique: true,
@@ -18,7 +18,22 @@ const userSchema = new Schema(
             type: String,
             required: true,
         },
-        posts: [Post]
+        phoneNumber: {
+            type: String,
+            match: [/^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/, 'Phone number format is incorrect, must be in this format: 888-888-8888']
+        },
+        posts: [{
+            type: Types.ObjectId,
+            ref: 'Post'
+        }],
+        tipsProvided: {
+            type: Number,
+            default: 0
+        },
+        admin: {
+            type: Boolean,
+            default: false
+        }
     },
     // set this to use virtual below
     {

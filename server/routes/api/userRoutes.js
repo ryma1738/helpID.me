@@ -7,7 +7,6 @@ const {
     createUser,
     updateUser,
     deleteUser,
-
 } = require('../../controllers/userControllers');
 
 router.route('/')
@@ -23,3 +22,5 @@ router.route('/signup')
 
 router.route('/admin')
     .get(verifyTokenAdmin, getAllUsers) // ✓
+
+module.exports = router;

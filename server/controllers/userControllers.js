@@ -60,8 +60,8 @@ const userController = {
     // Update user by ID
     updateUser(req, res) {
         let userObj = {};
-        if (req.body.name) {
-            userObj.name = req.body.name;
+        if (req.body.username) {
+            userObj.username = req.body.username;
         }
         if (req.body.email) {
             userObj.email = req.body.email;
