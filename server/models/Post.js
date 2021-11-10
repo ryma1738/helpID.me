@@ -1,5 +1,5 @@
 const { Schema, model, Types } = require('mongoose');
-const { Tip } = require('../models');
+
 
 const postSchema = new Schema(
     {
@@ -28,7 +28,6 @@ const postSchema = new Schema(
         video: {
             type: String,
             unique: true
-
         },
         contactNumber: {
             type: String,

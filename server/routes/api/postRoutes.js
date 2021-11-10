@@ -1,22 +1,33 @@
 const router = require('express').Router();
 const { verifyTokenAdmin, verifyToken } = require('../../utils/auth')
-const multer = require('multer');
+const {
+    getAllPosts,
+    getOnePost,
+    getUsersPosts,
+    getUserPost,
+    createPost,
+    addImageToPost,
+    removeImageFromPost,
+    editPost
+} = require('../../controllers/postControllers');
 
-// Set up image Uploading
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => { // destination for files
-        cb(null, '../../models/imageUploads')
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname + '-' + Date.now())
-    }
-});
+router.route('/')
+.get(getAllPosts)
+.post(verifyToken, createPost)
 
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 1024 * 1024 * 5  // max file size is 5MB
-    }
-});
+router.route('/image')
+.put(verifyToken, addImageToPost)
+.delete(verifyToken, removeImageFromPost)
+
+router.route('/:id')
+.get(getOnePost)
+
+router.route('/user')
+.get(verifyToken, getUsersPosts)
+
+router.route('/user/:id')
+.get(verifyToken, getUserPost)
+.put(verifyToken, editPost)
+
 
 module.exports = router;

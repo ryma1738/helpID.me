@@ -1,6 +1,6 @@
 const { Schema, model, Types } = require('mongoose');
 const bcrypt = require('bcrypt');
-const { Post } = require('../models');
+
 const userSchema = new Schema(
     {
         username: { 
@@ -26,7 +26,7 @@ const userSchema = new Schema(
             type: Types.ObjectId,
             ref: 'Post'
         }],
-        tipsProvided: {
+        tipsProvided: {  //Maybe
             type: Number,
             default: 0
         },
