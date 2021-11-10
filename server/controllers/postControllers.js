@@ -6,6 +6,7 @@ const postControllers = {
     getAllPosts(req, res) {
         Post.find({})
         .select('-userId -contactNumber -tips')
+        .populate('userId', 'username')
         .then(postData => res.status(200).json(postData))
         .catch(err => {
             console.log(err);
@@ -15,6 +16,7 @@ const postControllers = {
     getOnePost(req, res) {
         Post.findById(req.params.id)
         .select('-userId -tips')
+        .populate('userId', 'username')
         .then(postData => {
             postData.totalTips = postData.tipsReceived();
             res.status(200).json(postData)
@@ -27,6 +29,7 @@ const postControllers = {
     getUsersPosts(req, res) { // get all posts associated with a user.
         Post.find({userId: req.user._id})
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => res.status(200).json(postData))
             .catch(err => {
                 console.log(err);
@@ -36,6 +39,7 @@ const postControllers = {
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips and edit the post
         Post.findById(req.params.id)
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => {
                 postData.totalTips = postData.tipsReceived();
                 res.status(200).json(postData)
@@ -56,6 +60,7 @@ const postControllers = {
         }],
             { new: true, runValidators: true })
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => res.status(200).json(postData))
             .catch(err => {
                 console.log(err);
@@ -73,6 +78,7 @@ const postControllers = {
             }
         }, { new: true, runValidators: true })
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => res.status(200).json(postData))
             .catch(err => {
                 console.log(err);
@@ -89,6 +95,7 @@ const postControllers = {
             }
         }, { new: true, runValidators: true })
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => res.status(200).json(postData))
             .catch(err => {
                 console.log(err);
@@ -117,6 +124,7 @@ const postControllers = {
         }
         Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id }, postObj, { new: true, runValidators: true })
             .select('-userId')
+            .populate('userId', 'username')
             .then(postData => res.status(200).json(postData))
             .catch(err => {
                 console.log(err);

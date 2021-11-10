@@ -18,7 +18,7 @@ router.route('/login')
     .post(userLogin); // ✓ - body: {email: <email>, password: <password>}
 
 router.route('/signup')
-    .post(createUser); // ✓ - body: {name: <users name>, <email>, password: <password> }
+    .post(createUser); // ✓ - body: {username: <username>, email: <email>, password: <password>, phoneNumber: <801-888-8888> }
 
 router.route('/admin')
     .get(verifyTokenAdmin, getAllUsers) // ✓
