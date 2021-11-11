@@ -47,12 +47,24 @@ const postControllers = {
         Post.findById(req.params.id)
         .select('-__v -tips')
         .populate('userId', 'username')
-        .then(postData => {
-            const images = encodeImages(postData);
-            postData.images = []; 
-            res.status(200).json({ data: postData, totalTips: postData.tipsReceived(), images: images})
+        .then(async postData => {
+            if (!postData) {
+                res.status(404).json({message: "Post not found"})
+            } else {
+                console.log( await postData.expiresIn())
+                const images = encodeImages(postData);
+                postData.images = [];
+                res.status(200).json({ data: postData, totalTips: postData.tipsReceived(), images: images })
+            }
         })
-        .catch(err => { console.log(err); res.sendStatus(500);});
+        .catch(err => { 
+            if (err.name === "CastError") {
+                res.status(404).json({ message: "Post not found" })
+            } else {
+                console.log(err);
+                res.sendStatus(500);
+            }
+        });
     },
     getUsersPosts(req, res) { // get all posts associated with a user.
         Post.find({userId: req.user._id})
@@ -63,7 +75,7 @@ const postControllers = {
                 for (let i = 0; i < postData.length; i++) {
                     let images = encodeImage(postData[i]);
                     postData[i].images = [];
-                    compiledPostData.push({ data: postData[i], totalTips: postData[i].tipsReceived(), images: images });
+                    compiledPostData.push({ data: postData[i], totalTips: postData[i].tipsReceived(), images: images, expiresIn: postData.expiresIn() });
                 }
                 res.status(200).json(compiledPostData)
             })
@@ -76,9 +88,16 @@ const postControllers = {
             .then(postData => {
                 const images = encodeImages(postData);
                 postData.images = [];
-                res.status(200).json({ data: postData, totalTips: postData.tipsReceived(), images: images })
+                res.status(200).json({ data: postData, totalTips: postData.tipsReceived(), images: images, expiresIn: postData.expiresIn()  })
             })
-            .catch(err => { console.log(err); res.sendStatus(500); });
+            .catch(err => { 
+                if (err.name === "CastError") {
+                    res.status(404).json({ message: "Post not found" })
+                } else {
+                    console.log(err);
+                    res.sendStatus(500);
+                }
+             });
     },
     createPost(req, res) {
         Post.create([{
@@ -182,6 +201,9 @@ const postControllers = {
         Post.findOneAndDelete({_id: req.params.id, userId: req.user._id})
         .then(postData => res.status(200).json({message: "Post deleted successfully"}))
         .catch(err => {res.sendStatus(500); console.log(err);})
+    },
+    renewPost(req, res) {
+        //this function will take the data from the post
     }
 }
 

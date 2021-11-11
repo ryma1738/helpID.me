@@ -43,7 +43,7 @@ const postSchema = new Schema(
         createdAt: {
             type: Date,
             default: Date.now(),
-            expires: '1m'
+            expires: '120d'
         }
     },
     {
@@ -58,10 +58,33 @@ postSchema.methods.tipsReceived = function () {
         return this.tips.length
     } else {
         return 0;
+    } 
+    
+}
+
+postSchema.methods.expiresIn = async function () {
+    const createdAt = this.createdAt
+    const now = Date.now();
+    const diff = now - createdAt; 
+    const timeRemaining = ((10368000 * 1000) - diff) / 1000;
+    if (timeRemaining < 3600) {
+        return { timeRemaining: timeRemaining / 60, value: "minutes"}
+    } else if (timeRemaining < 86400) {
+        return { timeRemaining: timeRemaining / 60 / 60, value: "hours"}
+    } else {
+        return { timeRemaining: (timeRemaining / 60 / 60 / 24), value: "days"} 
     }
     
 }
 
-const Post = model('Post', postSchema);
+const Post = model('Post', postSchema); 
+
+// async function test() {
+//     await Post.collection.dropIndex('createdAt_1')  
+//     console.log( await Post.collection.indexes())
+// }
+// test()
+ 
+    
 
 module.exports = Post;
