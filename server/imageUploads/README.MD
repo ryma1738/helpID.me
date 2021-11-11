@@ -1,0 +1,1 @@
+ ## This is a cache for the incoming images before they are turned in to binary data and sent to the database.

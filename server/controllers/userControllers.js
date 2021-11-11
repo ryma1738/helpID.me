@@ -69,6 +69,9 @@ const userController = {
         if (req.body.password) {
             userObj.password = req.body.password;
         }
+        if (req.body.phoneNumber) {
+            userObj.phoneNumber = req.body.phoneNumber;
+        }
         if (!userObj) {
             return res.status(400).json({ message: 'You must enter a value to update!' })
         }
@@ -88,7 +91,7 @@ const userController = {
             .catch(err => res.status(500).json({ error: err }))
     },
 
-    // delete user 
+    // delete user TODO: delete all of the users posts but not their tips
     deleteUser(req, res) {
         User.findOneAndDelete({ _id: req.user._id })
             .then(userData => {
@@ -96,7 +99,6 @@ const userController = {
                 res.status(200).json({ message: 'This user was deleted!' })
             })
             .catch(err => res.status(500).json({ error: err }));;
-
     }
 }
 

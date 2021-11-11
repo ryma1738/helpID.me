@@ -8,19 +8,39 @@ const {
     createPost,
     addImageToPost,
     removeImageFromPost,
-    editPost
+    editPost,
+    deletePost
 } = require('../../controllers/postControllers');
+
+// Set up image Uploading
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => { // destination for files
+        cb(null, './imageUploads')
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname)
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5  // max file size is 5MB
+    }
+});
 
 router.route('/')
 .get(getAllPosts)
 .post(verifyToken, createPost)
 
 router.route('/image')
-.put(verifyToken, addImageToPost)
+.put(verifyToken, upload.single('image'), addImageToPost)
 .delete(verifyToken, removeImageFromPost)
 
 router.route('/:id')
 .get(getOnePost)
+.delete(verifyToken, deletePost);
 
 router.route('/user')
 .get(verifyToken, getUsersPosts)

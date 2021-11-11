@@ -1,4 +1,4 @@
-const { Schema, model, Types } = require('mongoose');
+const { Schema, model, Types, Model } = require('mongoose');
 
 
 const postSchema = new Schema(
@@ -26,8 +26,7 @@ const postSchema = new Schema(
             contentType: String
         }],
         video: {
-            type: String,
-            unique: true
+            type: String
         },
         contactNumber: {
             type: String,
@@ -37,7 +36,7 @@ const postSchema = new Schema(
             type: Types.ObjectId,
             ref: 'Tip' 
         }],
-        views: { // could created a localStorage variable that lists each post id visited and will only update the count if the post id is not found.
+        views: { // could create a localStorage variable that lists each post id visited and will only update the count if the post id is not found.
             type: Number,
             default: 0
         },
@@ -55,7 +54,12 @@ const postSchema = new Schema(
 );
 
 postSchema.methods.tipsReceived = function () {
-    return this.tips.length
+    if (this.tips) {
+        return this.tips.length
+    } else {
+        return 0;
+    }
+    
 }
 
 const Post = model('Post', postSchema);

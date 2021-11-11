@@ -12,7 +12,7 @@ const {
 router.route('/')
     .get(verifyToken, getOneUser) // ✓
     .put(verifyToken, updateUser) // ✓ - body: {name: <users name>, <email>, password: <password> } can include any of these fields
-    .delete(verifyToken, deleteUser); // ✓ - will delete the user who is logged in, users past orders will still be visible by admin
+    .delete(verifyToken, deleteUser); // ✓ - will delete the user who is logged in
 
 router.route('/login')
     .post(userLogin); // ✓ - body: {email: <email>, password: <password>}
