@@ -1,6 +1,5 @@
 const { Schema, model, Types, Model } = require('mongoose');
 
-
 const postSchema = new Schema(
     {
         title: {
@@ -26,7 +25,8 @@ const postSchema = new Schema(
             contentType: String
         }],
         video: {
-            type: String
+            type: String,
+            match: [/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/, "Not a valid Youtube link!"]
         },
         contactNumber: {
             type: String,
@@ -59,7 +59,6 @@ postSchema.methods.tipsReceived = function () {
     } else {
         return 0;
     } 
-    
 }
 
 postSchema.methods.expiresIn = async function () {
@@ -68,23 +67,24 @@ postSchema.methods.expiresIn = async function () {
     const diff = now - createdAt; 
     const timeRemaining = ((10368000 * 1000) - diff) / 1000;
     if (timeRemaining < 3600) {
-        return { timeRemaining: timeRemaining / 60, value: "minutes"}
+        return { timeRemaining: Math.ceil(timeRemaining / 60), value: "minutes"}
     } else if (timeRemaining < 86400) {
-        return { timeRemaining: timeRemaining / 60 / 60, value: "hours"}
+        return { timeRemaining: Math.ceil(timeRemaining / 60 / 60), value: "hours"}
     } else {
-        return { timeRemaining: (timeRemaining / 60 / 60 / 24), value: "days"} 
-    }
-    
+        return { timeRemaining: Math.ceil(timeRemaining / 60 / 60 / 24), value: "days"} 
+    }  
+}
+
+postSchema.methods.totalImages = function () {
+    return this.images.length;
 }
 
 const Post = model('Post', postSchema); 
 
+//Post.collection.deleteMany({}); // this is used to delete all posts on file for dev use only
 // async function test() {
-//     await Post.collection.dropIndex('createdAt_1')  
 //     console.log( await Post.collection.indexes())
 // }
-// test()
- 
-    
+// test()    
 
 module.exports = Post;

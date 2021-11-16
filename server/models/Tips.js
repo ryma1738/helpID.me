@@ -21,10 +21,16 @@ const tipSchema = new Schema(
         image: {
             data: Buffer,
             contentType: String
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now(),
+            expires: '120d'
         }
     }
 );
 
 const Tip = model('Tip', tipSchema);
 
+// Tip.collection.deleteMany({}) // this is used to delete all tips on file for dev use only
 module.exports = Tip;

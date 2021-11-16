@@ -11,7 +11,7 @@ const {
 
 router.route('/')
     .get(verifyToken, getOneUser) // ✓
-    .put(verifyToken, updateUser) // ✓ - body: {name: <users name>, <email>, password: <password> } can include any of these fields
+    .put(verifyToken, updateUser) // ✓ - body: {username: <users name>, <email>, password: <password> } can include any of these fields
     .delete(verifyToken, deleteUser); // ✓ - will delete the user who is logged in
 
 router.route('/login')

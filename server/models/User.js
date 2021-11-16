@@ -26,10 +26,6 @@ const userSchema = new Schema(
             type: Types.ObjectId,
             ref: 'Post'
         }],
-        tipsProvided: {  //Maybe
-            type: Number,
-            default: 0
-        },
         admin: {
             type: Boolean,
             default: false
