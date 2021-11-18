@@ -72,7 +72,7 @@ const userController = {
         if (req.body.phoneNumber) {
             userObj.phoneNumber = req.body.phoneNumber;
         }
-        if (!userObj) {
+        if (Object.keys(userObj).length === 0) {
             return res.status(400).json({ message: 'You must enter a value to update!' })
         }
         User.findOneAndUpdate(

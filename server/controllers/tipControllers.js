@@ -4,9 +4,10 @@ const path = require('path');
 
 const tipControllers = {
 
-    getAllTips(req, res) { // for dev use only
+    getAllTips(req, res) { // for dev use only / admin use?
         Tip.find({})
-        .select('-__v -image')
+        .select('-__v -image') 
+        .populate("postId", "title userId")
         .then(tipData => {
             res.status(200).json(tipData)
         })
@@ -35,15 +36,29 @@ const tipControllers = {
                 contentType: req.file.mimetype
             } : null
         }], { new: true, runValidators: true }) 
-        .then(tipData => {
+        .then(tipDataModel => {
             Tip.findOne({subject: req.body.subject}).select("_id id").then(tipData => {
                 Post.findByIdAndUpdate(req.body.id, { $push: { tips: tipData._id } }, { new: true, runValidators: true })
                     .then(postData => res.status(200).json({ message: 'Tip was added successfully'}))
                     .catch(err => res.status(500).json(err));
-            });     
+            }).catch(err => res.status(500).json(err));     
         })
         .catch(err => {
-            res.status(500).json(err);
+            if (err.name === "ValidationError") {
+                if (err.errors.subject && err.errors.title) {
+                    return res.status(400).json({ message: "The title and subject of the tip are required!" })
+                }
+                if (err.errors.subject) {
+                    return res.status(400).json({ message: "The subject of the tip is required!" })
+                }
+                if (err.errors.title) {
+                    return res.status(400).json({ message: "The title of the tip is required!" })
+                }
+                
+            } else {
+                console.log(err)
+                res.status(500).json({errorType: "Unknown", error: err});
+            }
         });
 
         if (req.file) {
@@ -56,7 +71,13 @@ const tipControllers = {
     },
     editTip(req, res) {
         let data = {}
-        if (req.queries.uploadImage) {
+        if (!req.file && req.query.deleteImage) {
+            Tip.findOne({ _id: req.body.id, userId: req.user._id }, function (err, tipData) {
+                tipData.image = undefined;
+                tipData.save();
+            })
+        }
+        if (req.file) {
             data.image = {
                 data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
                 contentType: req.file.mimetype
@@ -68,21 +89,29 @@ const tipControllers = {
         if (req.body.subject) {
             data.subject = req.body.subject
         }
-        if (!data) {
+        if (Object.keys(data).length === 0 && !req.query.deleteImage) { 
             return res.status(400).json({message: "You must enter data to update tip"})
+        }
+        if (Object.keys(data).length === 0 && req.query.deleteImage && !req.file) {
+            return res.status(200).json({ message: "Image deleted successfully" })
         }
         Tip.findOneAndUpdate({_id: req.body.id, userId: req.user._id}, data, { new: true, runValidators: true })
         .then(tipData => {
-            res.status(200).json({message: "Tip updated successfully"});
+            if (!tipData) {
+                return res.status(400).json({message: "Tip not found"})
+            }
+            res.status(200).json({message: "Tip updated successfully"}); 
         })
         .catch(err => {
             res.status(500).json(err);
         });
-        fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
-            if (err) {
-                console.log(err);
-            }
-        });
+        if (req.file) {
+            fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        }
     },
     async deleteTip(req, res) {
         Tip.findOneAndDelete({_id: req.body.id, userId: req.user._id})

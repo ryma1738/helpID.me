@@ -34,9 +34,24 @@ const upload = multer({
         }
     },
     limits: {
-        fileSize: 1024 * 1024 * 2  // max file size is 5MB
+        fileSize: 1024 * 1024 * 2  // max file size is 2MB
     }
 }).single('image');
+
+// const uploads = multer({ // upload multiple images
+//     storage: storage,
+//     fileFilter: (req, file, cb) => {
+//         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+//             cb(null, true);
+//         } else {
+//             cb(null, false);
+//             return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
+//         }
+//     },
+//     limits: {
+//         fileSize: 1024 * 1024 * 2  // max file size is 2MB
+//     }
+// }).array('images');
 
 // routes begin
 router.route('/')
@@ -47,7 +62,10 @@ router.route('/image')
     .put(verifyToken, (req, res) => {
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
-                return res.status(400).json(err);
+                if (err.message === "File too large") {
+                    return res.status(400).json({ message: "Your file is too large. The maximum size for a file is 2MB" });
+                }
+                return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ message: "Only .png, .jpg, and .jpeg image formats allowed!"})

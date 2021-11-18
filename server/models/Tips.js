@@ -12,10 +12,12 @@ const tipSchema = new Schema(
         },
         userId: {
             type: Types.ObjectId,
+            ref: "User",
             required: true
         },
         postId: {
             type: Types.ObjectId,
+            ref: "Post",
             required: true
         },
         image: {

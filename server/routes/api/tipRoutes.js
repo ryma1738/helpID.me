@@ -34,11 +34,14 @@ const upload = multer({
 }).single('image');
 
 router.route('/')
-.get(getAllTips)
-    .post(verifyToken, (req, res) => {
+    .get(getAllTips) // for dev use
+    .post(verifyToken, (req, res) => { // ✓
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
-                return res.status(400).json(err);
+                if (err.message === "File too large") {
+                    return res.status(400).json({message: "Your file is too large. The maximum size for a file is 0.5MB"});
+                }
+                return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ message: "Only .png, .jpg, and .jpeg image formats allowed!" })
@@ -48,10 +51,13 @@ router.route('/')
             createTip(req, res);
         });
     })
-    .put(verifyToken, (req, res) => {// accepts queries: ?updateImage as true or false, default is false
+    .put(verifyToken, (req, res) => {// ✓ accepts queries: ?updateImage as true or false, default is false
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
-                return res.status(400).json(err);
+                if (err.message === "File too large") {
+                    return res.status(400).json({ message: "Your file is too large. The maximum size for a file is 0.5MB" });
+                }
+                return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ message: "Only .png, .jpg, and .jpeg image formats allowed!" })
@@ -61,6 +67,6 @@ router.route('/')
             editTip(req, res);
         });
     }) 
-    .delete(verifyToken, deleteTip)
+    .delete(verifyToken, deleteTip); // ✓
 
 module.exports = router;
