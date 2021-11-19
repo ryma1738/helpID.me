@@ -6,8 +6,6 @@ const {
     getUsersPosts,
     getUserPost,
     createPost,
-    addImageToPost,
-    removeImageFromPost,
     editPost,
     deletePost
 } = require('../../controllers/postControllers');
@@ -22,21 +20,6 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + file.originalname)
     }
 });
-
-// const upload = multer({
-//     storage: storage,
-//     fileFilter: (req, file, cb) => {
-//         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-//             cb(null, true);
-//         } else {
-//             cb(null, false);
-//             return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
-//         }
-//     },
-//     limits: {
-//         fileSize: 1024 * 1024 * 2  // max file size is 2MB
-//     }
-// }).single('image');
 
 const upload = multer({ // upload multiple images
     storage: storage,
@@ -56,26 +39,24 @@ const upload = multer({ // upload multiple images
 // routes begin
 router.route('/')
     .get(getAllPosts) // ✓ Need to edit so it can accept search / sort criteria
-    .post(verifyToken, createPost) // ✓
-
-router.route('/image')
-    .put(verifyToken, (req, res) => {
+    .post(verifyToken, (req, res) => {
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
                 if (err.message === "File too large") {
-                    return res.status(400).json({ message: "Your file is too large. The maximum size for a file is 2MB" });
+                    return res.status(400).json({ errorMessage: "Your file is too large. The maximum size for a file is 2MB" });
+                } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
+                    return res.status(400).json({ errorMessage: "You can only upload a max of 5 images" });
                 }
                 return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
-                    return res.status(400).json({ message: "Only .png, .jpg, and .jpeg image formats allowed!"})
+                    return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
                 }
-                return res.status(500).json({errorType: "Unknown", error:err});
+                return res.status(500).json({ errorType: "Unknown", error: err });
             }
-            addImageToPost(req, res);
+            createPost(req, res);
         });
     }) // ✓
-    .delete(verifyToken, removeImageFromPost) // ✓
 
 router.route('/:id')
     .get(getOnePost)
@@ -86,7 +67,40 @@ router.route('/user/posts')
 
 router.route('/user/:id')
     .get(verifyToken, getUserPost)
-    .put(verifyToken, editPost) // ✓
+    .put(verifyToken, (req, res) => {
+        upload(req, res, function (err) { //middleware for multer error handling
+            if (err instanceof multer.MulterError) {
+                if (err.message === "File too large") {
+                    return res.status(400).json({ errorMessage: "Your file is too large. The maximum size for a file is 2MB" });
+                } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
+                    return res.status(400).json({ errorMessage: "You can only upload a max of 5 images" });
+                }
+                return res.status(400).json({ errorType: "Unknown", error: err });
+            } else if (err) {
+                if (err.storageErrors) {
+                    return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
+                }
+                return res.status(500).json({ errorType: "Unknown", error: err });
+            }
+            editPost(req, res);
+        });
+    }) // ✓ - may need more testing be seems to be working
 
 
 module.exports = router;
+
+
+// const upload = multer({
+//     storage: storage,
+//     fileFilter: (req, file, cb) => {
+//         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+//             cb(null, true);
+//         } else {
+//             cb(null, false);
+//             return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
+//         }
+//     },
+//     limits: {
+//         fileSize: 1024 * 1024 * 2  // max file size is 2MB
+//     }
+// }).single('image');

@@ -1,7 +1,7 @@
 const { Post } = require("../models");
 const fs = require('fs');
 const path = require('path');
-const { encodeImage, encodeImages, encodeSingleImage } = require('../utils/helpers')
+const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } = require('../utils/helpers')
 
 const postControllers = {
     getAllPosts(req, res) { // need to modify to accept search and sort params
@@ -12,7 +12,6 @@ const postControllers = {
             let compiledPostData = [];
             for (let i = 0; i < postDataObject.length; i++) {
                 let postData = postDataObject[i].toJSON();
-                console.log(postData)
                 postData.images = encodeImage(postData);
                 compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
             }
@@ -99,7 +98,7 @@ const postControllers = {
     },
     createPost(req, res) { // TODO: add the ability to add multiple photos on creation / a photo
         let images = []
-        if (req.files) {
+        if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 images.push({
                     data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.files[i].filename)),
@@ -129,7 +128,7 @@ const postControllers = {
             }
             res.status(500).json(err);
         });
-        if (req.files) {
+        if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 fs.rm(path.join(__dirname + "../../imageUploads/" + req.files[i].filename), {}, (err) => {
                     if (err) {
@@ -139,75 +138,70 @@ const postControllers = {
             }
         }
     },
-    // addImageToPost(req, res) { // merge to edit post 
-    //     if (!req.file) {
-    //         return res.status(400).json({message: "You must upload a file to add an image"})
-    //     }
-    //     Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id }, {
-    //         $push: { images: { 
-    //             data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
-    //             contentType: req.file.mimetype
-    //             }
-    //         }
-    //     }, { new: true, runValidators: true })
-    //         .select('-__v -userId')
-    //         .then(postData => {
-    //             if (!postData) {
-    //                 res.status(404).json({message: "That Post was not found or does not belong to you"})
-    //             } else {
-    //                 res.status(200).json({ message: "Image added successfully" })
-    //             }
-                
-                
-    //         })
-    //         .catch(err => {
-    //             if (err.name === "CastError") {
-    //                 if (err.kind === "ObjectId") {
-    //                     return res.status(400).json({message: "Post not found"})
-    //                 }
-    //             }
-    //             res.status(500).json(err); 
-    //             });
-    //     fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
-    //         if (err) {
-    //             console.log(err);
-    //         }
-    //     });
-    // },
-    // removeImageFromPost(req, res) {
-    //     Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id  }, {
-    //         $pull: {
-    //             images: {
-    //                 _id: req.body.imageId
-    //             }
-    //         }
-    //     }, { new: true, runValidators: true })
-    //         .select('-__v -userId')
-    //         .then(postData => {
-    //             if (!postData) {
-    //                 res.status(404).json({ message: "That Post was not found" })
-    //             } else if (postData.images.length === 0) {
-    //                 res.status(200).json({ message: "This post contains no images" })
-    //             } else {  
-    //                 res.status(200).json({ message: "Image Removed Successfully"})
-    //             }
-    //         })
-    //         .catch(err => {
-    //             if (err.name === "CastError") {
-    //                 if (err.value === req.body.id) {
-    //                     return res.status(404).json({ message: "That Post was not found" })
-    //                 }
-    //                 return res.status(404).json({message: "Image Id not found"})
-    //             }
-    //             res.status(500).json(err); 
-    //         });
-    // },
-    editImageOrder(req, res) {
+    editImageOrder(req, res) { // maybe
         //Add a feature that allows the user to change the order of the images. What ever image is first is the main one.
         // this can be done by allowing the user to drag and drop them into any order. Once complete it sends the order as an array
         //of the old array indexes, for example [5,3,1,2,0,4] vs [0,1,2,3,4,5], the entire image field is changed accordingly.
     },
-    editPost(req, res) { // add ability to edit images posts from here
+    async editPost(req, res) { 
+        // Images Editing starts
+        if (req.body.removeImages || req.files.length > 0) {
+            const prePostData = await Post.findOne({ _id: req.params.id, userId: req.user._id }).catch(err => {
+                if (err.name === "CastError") {
+                    return res.status(404).json({ message: "That Post was not found" });
+                }
+                res.status(500).json(err);
+            })
+            
+            if (req.body.removeImages && req.files.length > 0) {
+                const totalImages = prePostData.images.length - req.body.removeImages.length + req.files.length;
+                if ( totalImages > 5) {
+                    for (let i = 0; i < req.files.length; i++) {
+                        fs.rm(path.join(__dirname + "/../imageUploads/" + req.files[i].filename), {}, (err) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                    }
+                    return res.status(400).json({message: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total"})
+                }
+            }
+            let i = 0;
+            if (req.body.removeImages) {
+                while (i < req.body.removeImages.length) {
+                    const results = await removeImages(i, req);
+                    if (results.status = 200) {
+                        i++
+                    } else {
+                        return res.status(results.status).json({ message: results.message, failedOn: i });
+                        //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
+                    }
+                }
+            }    
+            i = 0;
+            if (req.files.length > 0) {
+                if (req.files.length + prePostData.images.length > 5 && !req.body.removeImages) {
+                    for (let i = 0; i < req.files.length; i++) {
+                        fs.rm(path.join(__dirname + "/../imageUploads/" + req.files[i].filename), {}, (err) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                    }
+                    return res.status(400).json({ message: "You can have upto 5 images total. With your current changes their would be " + (req.files.length + prePostData.images.length) + " images total" })
+                }
+                while (i < req.files.length) {
+                    const results = await addImages(i, req);
+                    if (results.status = 200) {
+                        i++
+                    } else {
+                        return res.status(results.status).json({ message: results.message, failedOn: i });
+                        //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
+                    }
+                }
+            }       
+        }
+        // Basic edits start
         let postObj = {};
         if (req.body.title) {
             postObj.title = req.body.title;
@@ -224,8 +218,11 @@ const postControllers = {
         if (req.body.video) {
             postObj.video = req.body.video;
         }
-        if (!postObj) {
-            return res.status(400).json({ message: 'You must enter a value to update!' })
+        if (Object.keys(postObj).length === 0 && !req.body.removeImages && req.files.length === 0) {
+            return res.status(400).json({ message: 'You must enter a value to update' });
+        }
+        if ((req.body.removeImages || req.files.length > 0) && Object.keys(postObj).length === 0) {
+            return res.status(200).json({ message: 'Images updated successfully' });
         }
         Post.findOneAndUpdate({ _id: req.params.id, userId: req.user._id }, postObj, { new: true, runValidators: true })
             .select('-__v -userId')
@@ -236,10 +233,11 @@ const postControllers = {
                 } else {
                     if (postData.images) {
                         const images = encodeImages(postData);
-                        postData.images = [];
-                        res.status(200).json({ data: postData, images: images })
+                        let data = postData.toJSON();
+                        data.images = images;
+                        res.status(200).json({ message: "Post updated successfully", data: data })
                     } else {
-                        res.status(200).json(postData)
+                        res.status(200).json({ message: "Post updated successfully", data: postData })
                     }
                 }
             })
@@ -249,6 +247,9 @@ const postControllers = {
                 } else if (err.name === "CastError") {
                     if (err.kind === "date") {
                         return res.status(400).json({errorMessage: "You must enter a valid date format for the date value"})
+                    }
+                    if (err.kind === "ObjectId" && err.path === "_id") {
+                        return res.status(404).json({ message: "That Post was not found" });
                     }
                     return res.status(400).json({errorMessage: err.message})
                 }

@@ -39,23 +39,23 @@ router.route('/')
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
                 if (err.message === "File too large") {
-                    return res.status(400).json({message: "Your file is too large. The maximum size for a file is 0.5MB"});
+                    return res.status(400).json({errorMessage: "Your file is too large. The maximum size for a file is 0.5MB"});
                 }
                 return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
-                    return res.status(400).json({ message: "Only .png, .jpg, and .jpeg image formats allowed!" })
+                    return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
                 }
                 return res.status(500).json({ errorType: "Unknown", error: err });
             }
             createTip(req, res);
         });
     })
-    .put(verifyToken, (req, res) => {// ✓ accepts queries: ?updateImage as true or false, default is false
+    .put(verifyToken, (req, res) => {// ✓ accepts queries: ?deleteImage as true or false, default is false
         upload(req, res, function (err) { //middleware for multer error handling
             if (err instanceof multer.MulterError) {
                 if (err.message === "File too large") {
-                    return res.status(400).json({ message: "Your file is too large. The maximum size for a file is 0.5MB" });
+                    return res.status(400).json({ errorMessage: "Your file is too large. The maximum size for a file is 0.5MB" });
                 }
                 return res.status(400).json({ errorType: "Unknown", error: err });
             } else if (err) {

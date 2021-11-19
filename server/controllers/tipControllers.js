@@ -61,7 +61,7 @@ const tipControllers = {
             }
         });
 
-        if (req.file) {
+        if (req.file.length > 0) {
             fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
                 if (err) {
                     console.log(err);
@@ -71,13 +71,13 @@ const tipControllers = {
     },
     editTip(req, res) {
         let data = {}
-        if (!req.file && req.query.deleteImage) {
+        if (req.file.length === 0 && req.query.deleteImage) {
             Tip.findOne({ _id: req.body.id, userId: req.user._id }, function (err, tipData) {
                 tipData.image = undefined;
                 tipData.save();
             })
         }
-        if (req.file) {
+        if (req.file.length > 0) {
             data.image = {
                 data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
                 contentType: req.file.mimetype
@@ -92,7 +92,7 @@ const tipControllers = {
         if (Object.keys(data).length === 0 && !req.query.deleteImage) { 
             return res.status(400).json({message: "You must enter data to update tip"})
         }
-        if (Object.keys(data).length === 0 && req.query.deleteImage && !req.file) {
+        if (Object.keys(data).length === 0 && req.query.deleteImage && req.file.length === 0) {
             return res.status(200).json({ message: "Image deleted successfully" })
         }
         Tip.findOneAndUpdate({_id: req.body.id, userId: req.user._id}, data, { new: true, runValidators: true })
@@ -105,7 +105,7 @@ const tipControllers = {
         .catch(err => {
             res.status(500).json(err);
         });
-        if (req.file) {
+        if (req.file.length > 0) {
             fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
                 if (err) {
                     console.log(err);
@@ -117,7 +117,7 @@ const tipControllers = {
         Tip.findOneAndDelete({_id: req.body.id, userId: req.user._id})
         .then(tipData => {
             if (!tipData) {
-                res.status(404).json({message: "Tip not found or you do not have permissions to delete this tip"})
+                return res.status(404).json({message: "Tip not found or you do not have permissions to delete this tip"})
             }
             res.status(200).json({message: 'Tip deleted successfully'})
         }).catch(err => {
