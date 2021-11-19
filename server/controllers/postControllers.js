@@ -98,11 +98,21 @@ const postControllers = {
              });
     },
     createPost(req, res) { // TODO: add the ability to add multiple photos on creation / a photo
+        let images = []
+        if (req.files) {
+            for (let i = 0; i < req.files.length; i++) {
+                images.push({
+                    data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.files[i].filename)),
+                    contentType: req.files[i].mimetype
+                })
+            }
+        }
         Post.create([{
             title: req.body.title,
             date: req.body.date,
             summary: req.body.summary,
             userId: req.user._id,
+            images: images,
             video: req.body.video || null,
             contactNumber: req.body.contactNumber || "000-000-0000"
         }],
@@ -119,70 +129,79 @@ const postControllers = {
             }
             res.status(500).json(err);
         });
-    },
-    addImageToPost(req, res) { // merge to edit post 
-        if (!req.file) {
-            return res.status(400).json({message: "You must upload a file to add an image"})
-        }
-        Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id }, {
-            $push: { images: { 
-                data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
-                contentType: req.file.mimetype
-                }
-            }
-        }, { new: true, runValidators: true })
-            .select('-__v -userId')
-            .then(postData => {
-                if (!postData) {
-                    res.status(404).json({message: "That Post was not found or does not belong to you"})
-                } else {
-                    res.status(200).json({ message: "Image added successfully" })
-                }
-                
-                
-            })
-            .catch(err => {
-                if (err.name === "CastError") {
-                    if (err.kind === "ObjectId") {
-                        return res.status(400).json({message: "Post not found"})
+        if (req.files) {
+            for (let i = 0; i < req.files.length; i++) {
+                fs.rm(path.join(__dirname + "../../imageUploads/" + req.files[i].filename), {}, (err) => {
+                    if (err) {
+                        console.log(err);
                     }
-                }
-                res.status(500).json(err); 
                 });
-        fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
-            if (err) {
-                console.log(err);
             }
-        });
+        }
     },
-    removeImageFromPost(req, res) {
-        Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id  }, {
-            $pull: {
-                images: {
-                    _id: req.body.imageId
-                }
-            }
-        }, { new: true, runValidators: true })
-            .select('-__v -userId')
-            .then(postData => {
-                if (!postData) {
-                    res.status(404).json({ message: "That Post was not found" })
-                } else if (postData.images.length === 0) {
-                    res.status(200).json({ message: "This post contains no images" })
-                } else {  
-                    res.status(200).json({ message: "Image Removed Successfully"})
-                }
-            })
-            .catch(err => {
-                if (err.name === "CastError") {
-                    if (err.value === req.body.id) {
-                        return res.status(404).json({ message: "That Post was not found" })
-                    }
-                    return res.status(404).json({message: "Image Id not found"})
-                }
-                res.status(500).json(err); 
-            });
-    },
+    // addImageToPost(req, res) { // merge to edit post 
+    //     if (!req.file) {
+    //         return res.status(400).json({message: "You must upload a file to add an image"})
+    //     }
+    //     Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id }, {
+    //         $push: { images: { 
+    //             data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
+    //             contentType: req.file.mimetype
+    //             }
+    //         }
+    //     }, { new: true, runValidators: true })
+    //         .select('-__v -userId')
+    //         .then(postData => {
+    //             if (!postData) {
+    //                 res.status(404).json({message: "That Post was not found or does not belong to you"})
+    //             } else {
+    //                 res.status(200).json({ message: "Image added successfully" })
+    //             }
+                
+                
+    //         })
+    //         .catch(err => {
+    //             if (err.name === "CastError") {
+    //                 if (err.kind === "ObjectId") {
+    //                     return res.status(400).json({message: "Post not found"})
+    //                 }
+    //             }
+    //             res.status(500).json(err); 
+    //             });
+    //     fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
+    //         if (err) {
+    //             console.log(err);
+    //         }
+    //     });
+    // },
+    // removeImageFromPost(req, res) {
+    //     Post.findOneAndUpdate({ _id: req.body.id, userId: req.user._id  }, {
+    //         $pull: {
+    //             images: {
+    //                 _id: req.body.imageId
+    //             }
+    //         }
+    //     }, { new: true, runValidators: true })
+    //         .select('-__v -userId')
+    //         .then(postData => {
+    //             if (!postData) {
+    //                 res.status(404).json({ message: "That Post was not found" })
+    //             } else if (postData.images.length === 0) {
+    //                 res.status(200).json({ message: "This post contains no images" })
+    //             } else {  
+    //                 res.status(200).json({ message: "Image Removed Successfully"})
+    //             }
+    //         })
+    //         .catch(err => {
+    //             if (err.name === "CastError") {
+    //                 if (err.value === req.body.id) {
+    //                     return res.status(404).json({ message: "That Post was not found" })
+    //                 }
+    //                 return res.status(404).json({message: "Image Id not found"})
+    //             }
+    //             res.status(500).json(err); 
+    //         });
+    // },
     editImageOrder(req, res) {
         //Add a feature that allows the user to change the order of the images. What ever image is first is the main one.
         // this can be done by allowing the user to drag and drop them into any order. Once complete it sends the order as an array

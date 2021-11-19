@@ -23,22 +23,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-            cb(null, true);
-        } else {
-            cb(null, false);
-            return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
-        }
-    },
-    limits: {
-        fileSize: 1024 * 1024 * 2  // max file size is 2MB
-    }
-}).single('image');
-
-// const uploads = multer({ // upload multiple images
+// const upload = multer({
 //     storage: storage,
 //     fileFilter: (req, file, cb) => {
 //         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
@@ -51,7 +36,22 @@ const upload = multer({
 //     limits: {
 //         fileSize: 1024 * 1024 * 2  // max file size is 2MB
 //     }
-// }).array('images');
+// }).single('image');
+
+const upload = multer({ // upload multiple images
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+            cb(null, true);
+        } else {
+            cb(null, false);
+            return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
+        }
+    },
+    limits: {
+        fileSize: 1024 * 1024 * 2  // max file size is 2MB
+    }
+}).array('images', 5);
 
 // routes begin
 router.route('/')
