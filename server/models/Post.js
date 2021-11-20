@@ -20,6 +20,11 @@ const postSchema = new Schema(
             ref: 'User',
             required: true
         },
+        categoryId: {
+            type: Types.ObjectId,
+            ref: "Category",
+            required: true
+        },
         images: [{
             data: Buffer,
             contentType: String
@@ -75,9 +80,7 @@ postSchema.methods.expiresIn = async function () {
     }  
 }
 
-postSchema.methods.totalImages = function () {
-    return this.images.length;
-}
+postSchema.index({title: "text", summary: "text"})
 
 const Post = model('Post', postSchema); 
 
@@ -85,6 +88,6 @@ const Post = model('Post', postSchema);
 // async function test() {
 //     console.log( await Post.collection.indexes())
 // }
-// test()    
+// test()
 
 module.exports = Post;

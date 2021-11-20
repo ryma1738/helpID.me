@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ // upload multiple images
+const upload = multer({ // upload multiple images upto 5
     storage: storage,
     fileFilter: (req, file, cb) => {
         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
@@ -36,11 +36,12 @@ const upload = multer({ // upload multiple images
     }
 }).array('images', 5);
 
+
 // routes begin
 router.route('/')
-    .get(getAllPosts) // ✓ Need to edit so it can accept search / sort criteria
+    .get(getAllPosts) // ✓ Can accept search queries: ?search=SomeTextHere&categoryId=61984622061b19dbb057d6d9
     .post(verifyToken, (req, res) => {
-        upload(req, res, function (err) { //middleware for multer error handling
+        upload(req, res, function (err) { //middleware for multer error handling and file uploads
             if (err instanceof multer.MulterError) {
                 if (err.message === "File too large") {
                     return res.status(400).json({ errorMessage: "Your file is too large. The maximum size for a file is 2MB" });
@@ -56,11 +57,11 @@ router.route('/')
             }
             createPost(req, res);
         });
-    }) // ✓
+    }) // ✓ uses multipart/form-data
 
 router.route('/:id')
-    .get(getOnePost)
-    .delete(verifyToken, deletePost);
+    .get(getOnePost) // ✓
+    .delete(verifyToken, deletePost); // ✓
 
 router.route('/user/posts')
     .get(verifyToken, getUsersPosts)
@@ -68,7 +69,7 @@ router.route('/user/posts')
 router.route('/user/:id')
     .get(verifyToken, getUserPost)
     .put(verifyToken, (req, res) => {
-        upload(req, res, function (err) { //middleware for multer error handling
+        upload(req, res, function (err) { //middleware for multer error handling and file uploads
             if (err instanceof multer.MulterError) {
                 if (err.message === "File too large") {
                     return res.status(400).json({ errorMessage: "Your file is too large. The maximum size for a file is 2MB" });
@@ -88,19 +89,3 @@ router.route('/user/:id')
 
 
 module.exports = router;
-
-
-// const upload = multer({
-//     storage: storage,
-//     fileFilter: (req, file, cb) => {
-//         if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-//             cb(null, true);
-//         } else {
-//             cb(null, false);
-//             return cb(new Error('Only .png, .jpg, and .jpeg image formats allowed!'))
-//         }
-//     },
-//     limits: {
-//         fileSize: 1024 * 1024 * 2  // max file size is 2MB
-//     }
-// }).single('image');

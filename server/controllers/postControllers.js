@@ -4,32 +4,70 @@ const path = require('path');
 const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } = require('../utils/helpers')
 
 const postControllers = {
-    getAllPosts(req, res) { // need to modify to accept search and sort params
-        Post.find({})
-        .select('-__v -contactNumber -tips')
-        .populate('userId', 'username')
-        .then(async postDataObject => {
-            let compiledPostData = [];
-            for (let i = 0; i < postDataObject.length; i++) {
-                let postData = postDataObject[i].toJSON();
-                postData.images = encodeImage(postData);
-                compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
-            }
-            res.status(200).json(compiledPostData);
-        })
-        .catch(err => { console.log(err); res.sendStatus(500);});
+    getAllPosts(req, res) {
+        let search = {}
+        if (req.query.search) {
+            search.$text = { $search: req.query.search };
+        } if (req.query.categoryId) {
+            search.categoryId = req.query.categoryId;
+        }
+        if (req.query.search) {
+            Post.find(search,
+                { score: { $meta: "textScore" } })
+                .sort({ score: { $meta: "textScore" } })
+                .select('-__v -contactNumber -tips')
+                .populate('userId', 'username')
+                .populate('categoryId', "_id category")
+                .then(async postDataObject => {
+                    let compiledPostData = [];
+                    for (let i = 0; i < postDataObject.length; i++) {
+                        let postData = postDataObject[i].toJSON();
+                        postData.images = encodeImage(postData);
+                        delete postData.userId._id;
+                        delete postData.userId.id;
+                        compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
+                    }
+                    res.status(200).json(compiledPostData);
+                })
+                .catch(err => {
+                    if (err.kind === "ObjectId") {
+                        return res.status(400).json({ errorMessage: "categoryId is in an invalid format / is not a valid categoryId"})
+                    }
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                });
+        } else {
+            Post.find(search)
+                .select('-__v -contactNumber -tips')
+                .populate('userId', 'username')
+                .populate('categoryId', "_id category")
+                .then(async postDataObject => {
+                    let compiledPostData = [];
+                    for (let i = 0; i < postDataObject.length; i++) {
+                        let postData = postDataObject[i].toJSON();
+                        postData.images = encodeImage(postData);
+                        delete postData.userId._id;
+                        delete postData.userId.id;
+                        compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
+                    }
+                    res.status(200).json(compiledPostData);
+                })
+                .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err}); });
+        }
     },
     getOnePost(req, res) {
         Post.findOne({_id: req.params.id})
         .select('-__v')
         .populate('userId', 'username')
         .populate('tips', 'title subject image')
+        .populate('categoryId', "_id category")
         .then(async postDataObject => {
             if (!postDataObject) {
                 return res.status(404).json({ message: "Post not found" });
             }
             let postData = postDataObject.toJSON();
             postData.images = encodeImages(postDataObject);
+            delete postData.userId._id;
+            delete postData.userId.id;
             for (let i = 0; i < postData.tips.length; i++) {
                 if (postData.tips[i].image) {
                     postData.tips[i].image = {
@@ -51,6 +89,7 @@ const postControllers = {
     getUsersPosts(req, res) { // get all posts associated with a user.
         Post.find({userId: req.user._id})
             .select('-__v -userId -tips')
+            .populate('categoryId', "_id category")
             .then(async postDataObject => {
                 if (!postDataObject || postDataObject.length === 0) {
                     return res.sendStatus(204);
@@ -65,12 +104,13 @@ const postControllers = {
                 }
                 res.status(200).json(compiledPostData);
             })
-            .catch(err => { console.log(err); res.sendStatus(500); });
+            .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err}); });
     }, 
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips and edit the post
         Post.findOne({_id: req.params.id, userId: req.user._id})
-            .select('-__v')
-            .populate('tips', "title subject image") 
+            .select('-__v -userId')
+            .populate('tips', "title subject image")
+            .populate('categoryId', "_id category")
             .then(async postDataObject  => {
                 if (!postDataObject) {
                     return res.status(404).json({message: "Post not found or you do not have permissions to edit this post"});
@@ -78,6 +118,7 @@ const postControllers = {
                 const expires = await postDataObject.expiresIn();
                 let postData = postDataObject.toJSON();
                 postData.images = encodeImages(postDataObject);
+
                 for (let i = 0; i < postData.tips.length; i++) {
                     if (postData.tips[i].image) {
                         postData.tips[i].image = {
@@ -96,7 +137,7 @@ const postControllers = {
                 }
              });
     },
-    createPost(req, res) { // TODO: add the ability to add multiple photos on creation / a photo
+    createPost(req, res) { 
         let images = []
         if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
@@ -111,6 +152,7 @@ const postControllers = {
             date: req.body.date,
             summary: req.body.summary,
             userId: req.user._id,
+            categoryId: req.body.categoryId,
             images: images,
             video: req.body.video || null,
             contactNumber: req.body.contactNumber || "000-000-0000"
@@ -218,6 +260,9 @@ const postControllers = {
         if (req.body.video) {
             postObj.video = req.body.video;
         }
+        if (req.body.categoryId) {
+            postObj.categoryId = req.body.categoryId;
+        }
         if (Object.keys(postObj).length === 0 && !req.body.removeImages && req.files.length === 0) {
             return res.status(400).json({ message: 'You must enter a value to update' });
         }
@@ -226,7 +271,6 @@ const postControllers = {
         }
         Post.findOneAndUpdate({ _id: req.params.id, userId: req.user._id }, postObj, { new: true, runValidators: true })
             .select('-__v -userId')
-            .populate('userId', 'username')
             .then(postData => {
                 if (!postData) {
                     res.status(404).json({ message: "That Post was not found" })
