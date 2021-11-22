@@ -22,10 +22,6 @@ const userSchema = new Schema(
             type: String,
             match: [/^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/, 'Phone number format is incorrect, must be in this format: 888-888-8888']
         },
-        posts: [{
-            type: Types.ObjectId,
-            ref: 'Post'
-        }],
         admin: {
             type: Boolean,
             default: false
@@ -53,7 +49,6 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.isCorrectPassword = async function (password) {
     return bcrypt.compare(password, this.password);
 };
-
 
 const User = model('User', userSchema);
 

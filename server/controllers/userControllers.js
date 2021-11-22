@@ -6,18 +6,15 @@ const userController = {
     getAllUsers(req, res) {
         User.find({})  
             .select('-__v -password -id')
-            .then(dbUserData => res.status(200).json(dbUserData))
-            .catch(err => {
-                console.log(err);
-                res.sendStatus(500);
-            });
+            .then(userData => res.status(200).json(userData))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
     },
 
     getOneUser(req, res) {
         User.findById(req.user._id)
             .select('-__v -password')
             .then(userData => res.status(200).json(userData))
-            .catch(err => res.status(500).json(err))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     },
 
     // login with email and password
@@ -26,19 +23,19 @@ const userController = {
             email: req.body.email
         })
             .select('-__v')
-            .then(async (dbUserData) => {
-                if (!dbUserData || dbUserData === {} || dbUserData.length === 0) {
-                    res.status(404).json({ message: 'No user found with this email!' });
+            .then(async (userData) => {
+                if (Object.keys(userData).length === 0) {
+                    res.status(404).json({ errorMessage: 'No user found with this email!' });
                     return;
                 } else {
-                    const passwordValid = await dbUserData.isCorrectPassword(req.body.password, dbUserData.password);
+                    const passwordValid = await userData.isCorrectPassword(req.body.password, userData.password);
                     if (passwordValid) {
-                        const token = signToken(dbUserData);
+                        const token = signToken(userData);
                         res.status(200).json(token);
-                    } else res.status(400).json({ message: 'Incorrect password' });
+                    } else res.status(400).json({ errorMessage: 'Incorrect password' });
                 }
             })
-            .catch(err => res.status(500).json({ error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     },
 
     // Create new user
@@ -54,7 +51,7 @@ const userController = {
                 const token = signToken(userData[0]);
                 res.status(200).json(token);
             })
-            .catch(err => res.status(500).json({ message: 'A user with this email already exists. Please login or use a different email.', error: err }));
+            .catch(err => res.status(500).json({ errorMessage: 'A user with this email already exists. Please login or use a different email.', error: err }));
     },
 
     // Update user by ID
@@ -73,32 +70,32 @@ const userController = {
             userObj.phoneNumber = req.body.phoneNumber;
         }
         if (Object.keys(userObj).length === 0) {
-            return res.status(400).json({ message: 'You must enter a value to update!' })
+            return res.status(400).json({ errorMessage: 'You must enter a value to update!' })
         }
         User.findOneAndUpdate(
             { _id: req.user._id },
             userObj,
             { new: true, runValidators: true })
             .select('-__v -password')
-            .then(dbUserData => {
-                if (!dbUserData) {
-                    res.status(404).json({ message: 'No user found with this id!' });
+            .then(userData => {
+                if (Object.keys(userData).length === 0) {
+                    res.status(404).json({ errorMessage: 'No user found with this id!' });
                     return;
                 }
-                const token = signToken(dbUserData);
-                res.status(200).json([dbUserData, token]);
+                const token = signToken(userData);
+                res.status(200).json([userData, token]);
             })
-            .catch(err => res.status(500).json({ error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     },
 
     // delete user TODO: delete all of the users posts but not their tips
     deleteUser(req, res) {
         User.findOneAndDelete({ _id: req.user._id })
             .then(userData => {
-                if (!userData) return res.status(400).json({ message: 'This user does not exist!' })
+                if (Object.keys(userData).length === 0) return res.status(400).json({ errorMessage: 'This user does not exist!' })
                 res.status(200).json({ message: 'This user was deleted!' })
             })
-            .catch(err => res.status(500).json({ error: err }));;
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));;
     }
 }
 

@@ -24,6 +24,10 @@ const tipSchema = new Schema(
             data: Buffer,
             contentType: String
         },
+        anonymous: {
+            type: Boolean,
+            default: false
+        },
         createdAt: {
             type: Date,
             default: Date.now(),

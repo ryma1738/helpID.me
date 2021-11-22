@@ -6,6 +6,12 @@ const categoriesSchema = new Schema(
             type: String,
             unique: true,
             required: true
+        },
+        subCategories: {
+            type: [String]
+        },
+        hint: {
+            type: String
         }
     }
 );

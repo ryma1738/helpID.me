@@ -1,4 +1,4 @@
-const { Schema, model, Types, Model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 
 const postSchema = new Schema(
     {
@@ -25,6 +25,9 @@ const postSchema = new Schema(
             ref: "Category",
             required: true
         },
+        subCategory: {
+            type: String
+        },
         images: [{
             data: Buffer,
             contentType: String
@@ -33,7 +36,7 @@ const postSchema = new Schema(
             type: String,
             match: [/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/, "Not a valid Youtube link!"]
         },
-        contactNumber: {
+        contactInfo: {
             type: String,
             match: [/^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/, 'Phone number format is incorrect, must be in this format: 888-888-8888']
         },

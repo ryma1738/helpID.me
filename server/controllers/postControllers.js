@@ -1,4 +1,4 @@
-const { Post } = require("../models");
+const { Post, Category } = require("../models");
 const fs = require('fs');
 const path = require('path');
 const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } = require('../utils/helpers')
@@ -10,6 +10,8 @@ const postControllers = {
             search.$text = { $search: req.query.search };
         } if (req.query.categoryId) {
             search.categoryId = req.query.categoryId;
+        } if (req.query.subCategory) {
+            search.subCategory = req.query.subCategory;
         }
         if (req.query.search) {
             Post.find(search,
@@ -58,11 +60,16 @@ const postControllers = {
         Post.findOne({_id: req.params.id})
         .select('-__v')
         .populate('userId', 'username')
-        .populate('tips', 'title subject image')
+            .populate({
+                path: "tips",
+                model: "Tip",
+                select: "_id title subject userId anonymous",
+                populate: { path: "userId", model: "User", select: "username" }
+            })
         .populate('categoryId', "_id category")
         .then(async postDataObject => {
             if (!postDataObject) {
-                return res.status(404).json({ message: "Post not found" });
+                return res.status(404).json({ errorMessage: "Post not found" });
             }
             let postData = postDataObject.toJSON();
             postData.images = encodeImages(postDataObject);
@@ -73,13 +80,19 @@ const postControllers = {
                     postData.tips[i].image = {
                         data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
                     }
-                }
+                } if (postData.tips[i].anonymous === true) {
+                    postData.tips[i].userId.userName = "Anonymous";
+                } 
+                delete postData.tips[i].anonymous;
+                delete postData.tips[i].userId._id;
+                delete postData.tips[i].userId.id;
             }
+            delete postData.id;
             res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived() })
         })
         .catch(err => { 
             if (err.name === "CastError") {
-                res.status(404).json({ message: "Post not found" });
+                res.status(404).json({ errorMessage: "Post not found" });
             } else {
                 console.log(err);
                 res.sendStatus(500);
@@ -97,7 +110,6 @@ const postControllers = {
                 let compiledPostData = [];
                 for (let i = 0; i < postDataObject.length; i++) {
                     let postData = postDataObject[i].toJSON();
-                    console.log(postData)
                     postData.images = encodeImage(postData);
                     const expires = await postDataObject[i].expiresIn();
                     compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived(), expiresIn: expires });
@@ -109,11 +121,16 @@ const postControllers = {
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips and edit the post
         Post.findOne({_id: req.params.id, userId: req.user._id})
             .select('-__v -userId')
-            .populate('tips', "title subject image")
+            .populate({ 
+                path: "tips", 
+                model: "Tip", 
+                select: "_id title subject userId anonymous",
+                populate: { path: "userId", model: "User", select: "username" } 
+            })
             .populate('categoryId', "_id category")
             .then(async postDataObject  => {
                 if (!postDataObject) {
-                    return res.status(404).json({message: "Post not found or you do not have permissions to edit this post"});
+                    return res.status(404).json({ errorMessage: "Post not found or you do not have permissions to edit this post"});
                 }
                 const expires = await postDataObject.expiresIn();
                 let postData = postDataObject.toJSON();
@@ -124,20 +141,25 @@ const postControllers = {
                         postData.tips[i].image = {
                             data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
                         }  
+                    } if (postData.tips[i].anonymous === true) {
+                        postData.tips[i].userId.userName = "Anonymous";
                     }
+                    delete postData.tips[i].anonymous;
+                    delete postData.tips[i].userId._id;
+                    delete postData.tips[i].userId.id;
                 }
                 res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived(), expiresIn: expires  })
             })
             .catch(err => { 
                 if (err.name === "CastError") {
-                    res.status(404).json({ message: "Post not found" });
+                    res.status(404).json({ errorMessage: "Post not found" });
                 } else {
                     console.log(err)
-                    res.status(500).json(err);
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err});
                 }
              });
     },
-    createPost(req, res) { 
+    async createPost(req, res) { 
         let images = []
         if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
@@ -147,14 +169,28 @@ const postControllers = {
                 })
             }
         }
+        if (req.body.subCategory) {
+            try {
+                const categoryData = await Category.findById(req.body.categoryId).lean()
+                if (!categoryData.subCategories.includes(req.body.subCategory)) {
+                    return res.status(400).json({ errorMessage: "The category you selected does not contain the sub category " + req.body.subCategory });
+                }
+            } catch(err) {
+                if (err.name === "CastError") {
+                    return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
+                }
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+            }
+        }
         Post.create([{
             title: req.body.title,
             date: req.body.date,
             summary: req.body.summary,
             userId: req.user._id,
             categoryId: req.body.categoryId,
+            subCategory: req.body.subCategory || undefined,
             images: images,
-            video: req.body.video || null,
+            video: req.body.video || undefined,
             contactNumber: req.body.contactNumber || "000-000-0000"
         }],
         { new: true, runValidators: true })
@@ -168,7 +204,7 @@ const postControllers = {
                 }
                 return res.status(400).json({ errorMessage: err.message })
             }
-            res.status(500).json(err);
+            res.status(500).json({ errorMessage: "Unknown Error", error: err});
         });
         if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
@@ -190,9 +226,9 @@ const postControllers = {
         if (req.body.removeImages || req.files.length > 0) {
             const prePostData = await Post.findOne({ _id: req.params.id, userId: req.user._id }).catch(err => {
                 if (err.name === "CastError") {
-                    return res.status(404).json({ message: "That Post was not found" });
+                    return res.status(404).json({ errorMessage: "That Post was not found" });
                 }
-                res.status(500).json(err);
+                res.status(500).json({ errorMessage: "Unknown Error", error: err});
             })
             
             if (req.body.removeImages && req.files.length > 0) {
@@ -205,7 +241,7 @@ const postControllers = {
                             }
                         });
                     }
-                    return res.status(400).json({message: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total"})
+                    return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total"})
                 }
             }
             let i = 0;
@@ -230,7 +266,7 @@ const postControllers = {
                             }
                         });
                     }
-                    return res.status(400).json({ message: "You can have upto 5 images total. With your current changes their would be " + (req.files.length + prePostData.images.length) + " images total" })
+                    return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + (req.files.length + prePostData.images.length) + " images total" })
                 }
                 while (i < req.files.length) {
                     const results = await addImages(i, req);
@@ -260,11 +296,8 @@ const postControllers = {
         if (req.body.video) {
             postObj.video = req.body.video;
         }
-        if (req.body.categoryId) {
-            postObj.categoryId = req.body.categoryId;
-        }
         if (Object.keys(postObj).length === 0 && !req.body.removeImages && req.files.length === 0) {
-            return res.status(400).json({ message: 'You must enter a value to update' });
+            return res.status(400).json({ errorMessage: 'You must enter a value to update' });
         }
         if ((req.body.removeImages || req.files.length > 0) && Object.keys(postObj).length === 0) {
             return res.status(200).json({ message: 'Images updated successfully' });
@@ -273,7 +306,7 @@ const postControllers = {
             .select('-__v -userId')
             .then(postData => {
                 if (!postData) {
-                    res.status(404).json({ message: "That Post was not found" })
+                    res.status(404).json({ errorMessage: "That Post was not found" })
                 } else {
                     if (postData.images) {
                         const images = encodeImages(postData);
@@ -287,34 +320,62 @@ const postControllers = {
             })
             .catch(err => { 
                 if (err._message === "Validation failed") {
-                    return res.status(400).json({errorMessage: err.message, errorType: err._message })
+                    return res.status(400).json({ errorMessage: err.message, errorType: err._message })
                 } else if (err.name === "CastError") {
                     if (err.kind === "date") {
-                        return res.status(400).json({errorMessage: "You must enter a valid date format for the date value"})
+                        return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value"})
                     }
                     if (err.kind === "ObjectId" && err.path === "_id") {
-                        return res.status(404).json({ message: "That Post was not found" });
+                        return res.status(404).json({ errorMessage: "That Post was not found" });
                     }
-                    return res.status(400).json({errorMessage: err.message})
+                    return res.status(400).json({ errorMessage: err.message})
                 }
-                res.status(500).json(err);
+                res.status(500).json({ errorMessage: "Unknown Error", error: err});
             });
     },
     deletePost(req, res) {
         Post.findOneAndDelete({_id: req.params.id, userId: req.user._id})
         .then(postData => {
             if (!postData) {
-                res.status(404).json({ message: "Post not found" })
+                res.status(404).json({ errorMessage: "Post not found" })
             } else {
                 res.status(200).json({ message: "Post deleted successfully" })
             }
         })
-        .catch(err => {res.sendStatus(500); console.log(err);})
+        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     },
     renewPost(req, res) {
         //this function will reset the exportation clock 
         //this can be done by updating the created at value to be Date.now(). 
         // can only be done after 60 days
+        Post.findOne({ _id: req.params.id, userId: req.user._id })
+            .lean()
+            .select('createdAt')
+            .then(postData => {
+                if (!postData || Object.keys(postData).length === 0) {
+                    return res.status(404).json({ errorMessage: "Post not found or you do not have permissions to edit this post" });
+                }
+                //credit: https://stackabuse.com/javascript-get-number-of-days-between-dates/
+                const date1 = new Date(postData.createdAt);
+                const date2 = new Date.now();
+
+                // One day in milliseconds
+                const oneDay = 1000 * 60 * 60 * 24;
+
+                // Calculating the time difference between two dates
+                const diffInTime = date2.getTime() - date1.getTime();
+
+                // Calculating the no. of days between two dates
+                const diffInDays = Math.round(diffInTime / oneDay);
+                if (diffInDays <= 60) {
+                    Post.findOneAndUpdate({ _id: req.params.id, userId: req.user._id }, { createdAt: Date.now() }, { new: true, runValidators: true })
+                    .lean()
+                    .then(postData => res.status(200).json("Your Post has been renewed"))
+                    .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+                } else {
+                    res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old"})
+                }
+            }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     }
 }
 

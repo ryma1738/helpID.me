@@ -35,14 +35,14 @@ const tipControllers = {
             image: req.file ? {
                 data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
                 contentType: req.file.mimetype
-            } : null
+            } : undefined
         }], { new: true, runValidators: true }) 
         .then(tipDataModel => {
             Tip.findOne({subject: req.body.subject}).select("_id id").then(tipData => {
                 Post.findByIdAndUpdate(req.body.id, { $push: { tips: tipData._id } }, { new: true, runValidators: true })
                     .then(postData => res.status(200).json({ message: 'Tip was added successfully'}))
-                    .catch(err => res.status(500).json({errorMessage: "Unknown Error", error: err}));
-            }).catch(err => res.status(500).json({errorMessage: "Unknown Error", error: err}));     
+                    .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err}));
+            }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err}));     
         })
         .catch(err => {
             if (err.name === "ValidationError") {
@@ -118,7 +118,7 @@ const tipControllers = {
         Tip.findOneAndDelete({_id: req.body.id, userId: req.user._id})
         .then(tipData => {
             if (!tipData) {
-                return res.status(404).json({message: "Tip not found or you do not have permissions to delete this tip"})
+                return res.status(404).json({ message: "Tip not found or you do not have permissions to delete this tip"})
             }
             res.status(200).json({ message: 'Tip deleted successfully'})
         }).catch(err => {
