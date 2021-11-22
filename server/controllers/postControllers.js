@@ -183,6 +183,15 @@ const postControllers = {
                 return res.status(500).json({ errorMessage: "Unknown Error", error: err });
             }
         }
+        if (req.files.length > 0) {
+            for (let i = 0; i < req.files.length; i++) {
+                fs.rm(path.join(__dirname + "../../imageUploads/" + req.files[i].filename), {}, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
+            }
+        }
         Post.create([{
             title: req.body.title,
             date: req.body.date,
@@ -198,24 +207,26 @@ const postControllers = {
         .then(postData => res.status(200).json({message: "Post Created Successfully"}))
         .catch(err => {
             if (err._message === "Post validation failed") {
-                return res.status(400).json({ errorMessage: err.message, errorType: err._message })
+                if (err.errors.categoryId) {
+                    return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
+                } if (err.errors.video) {
+                    return res.status(400).json({ errorMessage: "Video link must be a valid youtube link" });
+                } if (err.errors.summary) {
+                        if (err.errors.summary.properties.type === "maxlength") {
+                        return res.status(400).json({ errorMessage: "Your summary can not exceed 400 characters long" });
+                    } if (err.errors.summary.properties.type === "required") {
+                        return res.status(400).json({ errorMessage: "You must have a summary for your post" });
+                    }
+                }
+                return res.status(400).json({ errorMessage: err.message, errorType: err._message });
             } else if (err.name === "CastError") {
                 if (err.kind === "date") {
-                    return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value" })
+                    return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value" });
                 }
-                return res.status(400).json({ errorMessage: err.message })
+                return res.status(400).json({ errorMessage: err.message });
             }
             res.status(500).json({ errorMessage: "Unknown Error", error: err});
         });
-        if (req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                fs.rm(path.join(__dirname + "../../imageUploads/" + req.files[i].filename), {}, (err) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                });
-            }
-        }
     },
     editImageOrder(req, res) { // maybe
         //Add a feature that allows the user to change the order of the images. What ever image is first is the main one.
