@@ -10,9 +10,10 @@ const postControllers = {
             search.$text = { $search: req.query.search };
         } if (req.query.categoryId) {
             search.categoryId = req.query.categoryId;
-        } if (req.query.subCategory) {
-            search.subCategory = req.query.subCategory;
-        }
+            if (req.query.subCategory) {
+                search.subCategory = req.query.subCategory;
+            }
+        } 
         if (req.query.search) {
             Post.find(search,
                 { score: { $meta: "textScore" } })
