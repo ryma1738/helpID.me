@@ -1,4 +1,5 @@
 const { Schema, model, Types } = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const postSchema = new Schema(
     {
@@ -48,6 +49,22 @@ const postSchema = new Schema(
             type: Number,
             default: 0
         },
+        lat: {
+            type: Types.Decimal128,
+            required: true
+        },
+        lon: {
+            type: Types.Decimal128,
+            required: true
+        },
+        city: {
+            type: String,
+            required: true
+        },
+        state: {
+            type: String,
+            required: true
+        },
         createdAt: {
             type: Date,
             default: Date.now(),
@@ -84,6 +101,7 @@ postSchema.methods.expiresIn = async function () {
 }
 
 postSchema.index({title: "text", summary: "text"})
+postSchema.plugin(mongoosePaginate);
 
 const Post = model('Post', postSchema); 
 

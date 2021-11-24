@@ -22,6 +22,10 @@ const userSchema = new Schema(
             type: String,
             match: [/^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/, 'Phone number format is incorrect, must be in this format: 888-888-8888']
         },
+        notifications: [{
+            type: Types.ObjectId,
+            ref: 'Notification'
+        }],
         admin: {
             type: Boolean,
             default: false

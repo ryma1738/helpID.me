@@ -13,49 +13,65 @@ const postControllers = {
             if (req.query.subCategory) {
                 search.subCategory = req.query.subCategory;
             }
+        } if (req.query.state) {
+            search.state = req.query.state;
+            if (req.query.city) {
+                search.state = req.query.state;
+            }
         } 
+        let options;
         if (req.query.search) {
-            Post.find(search,
-                { score: { $meta: "textScore" } })
-                .sort({ score: { $meta: "textScore" } })
-                .select('-__v -contactNumber -tips')
-                .populate('userId', 'username')
-                .populate('categoryId', "_id category")
-                .then(async postDataObject => {
-                    let compiledPostData = [];
-                    for (let i = 0; i < postDataObject.length; i++) {
-                        let postData = postDataObject[i].toJSON();
-                        postData.images = encodeImage(postData);
-                        delete postData.userId._id;
-                        delete postData.userId.id;
-                        compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
-                    }
-                    res.status(200).json(compiledPostData);
-                })
-                .catch(err => {
-                    if (err.kind === "ObjectId") {
-                        return res.status(400).json({ errorMessage: "categoryId is in an invalid format / is not a valid categoryId"})
-                    }
-                    res.status(500).json({ errorMessage: "Unknown Error", error: err });
-                });
+            options = {
+                select: '-__v -contactNumber -tips',
+                sort: { score: { $meta: "textScore" } },
+                populate: [{
+                    path: "userId",
+                    model: "User",
+                    select: "username"
+                },
+                {
+                    path: "categoryId",
+                    model: "Category",
+                    select: "_id category"
+                }],
+                page: req.query.page || 1,
+                limit: req.query.limit || 20,
+                options: { score: { $meta: "textScore" } }
+                //allowDiskUse: true
+            }
         } else {
-            Post.find(search)
-                .select('-__v -contactNumber -tips')
-                .populate('userId', 'username')
-                .populate('categoryId', "_id category")
-                .then(async postDataObject => {
-                    let compiledPostData = [];
-                    for (let i = 0; i < postDataObject.length; i++) {
-                        let postData = postDataObject[i].toJSON();
-                        postData.images = encodeImage(postData);
-                        delete postData.userId._id;
-                        delete postData.userId.id;
-                        compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
-                    }
-                    res.status(200).json(compiledPostData);
-                })
-                .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err}); });
+            options = {
+                select: '-__v -contactNumber -tips',
+                populate: [{
+                    path: "userId",
+                    model: "User",
+                    select: "username"
+                },
+                {
+                    path: "categoryId",
+                    model: "Category",
+                    select: "_id category"
+                }],
+                page: req.query.page || 1,
+                limit: req.query.limit || 20,
+                //allowDiskUse: true
+            }
         }
+        Post.paginate(search, options, (err, results) => {
+            if (err) {
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+            }
+            let compiledPostData = [];
+            for (let i = 0; i < results.docs.length; i++) {
+                let postData = results.docs[i].toJSON();
+                postData.images = encodeImage(postData);
+                delete postData.userId._id;
+                delete postData.userId.id;
+                compiledPostData.push({ data: postData, totalTips: results.docs[i].tipsReceived() });
+            }
+            delete results.docs;
+            res.status(200).json({ posts: compiledPostData, pageData: results });
+        })
     },
     getOnePost(req, res) {
         Post.findOne({_id: req.params.id})
@@ -102,7 +118,7 @@ const postControllers = {
     },
     getUsersPosts(req, res) { // get all posts associated with a user.
         Post.find({userId: req.user._id})
-            .select('-__v -userId -tips')
+            .select('-__v -userId -tips -lat -lon -city -state')
             .populate('categoryId', "_id category")
             .then(async postDataObject => {
                 if (!postDataObject || postDataObject.length === 0) {
@@ -119,7 +135,7 @@ const postControllers = {
             })
             .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err}); });
     }, 
-    getUserPost(req, res) { // only user has access to this post, this is when they can view tips and edit the post
+    getUserPost(req, res) { // only user has access to this post, this is when they can view tips, edit the post, or send contact requests
         Post.findOne({_id: req.params.id, userId: req.user._id})
             .select('-__v -userId')
             .populate({ 
@@ -143,12 +159,13 @@ const postControllers = {
                             data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
                         }  
                     } if (postData.tips[i].anonymous === true) {
-                        postData.tips[i].userId.userName = "Anonymous";
+                        postData.tips[i].userId.username = "Anonymous";
                     }
                     delete postData.tips[i].anonymous;
                     delete postData.tips[i].userId._id;
                     delete postData.tips[i].userId.id;
                 }
+                postData.sameUser = true; // used for front end to tell if its the same user
                 res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived(), expiresIn: expires  })
             })
             .catch(err => { 
