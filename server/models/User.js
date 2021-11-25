@@ -29,6 +29,9 @@ const userSchema = new Schema(
         admin: {
             type: Boolean,
             default: false
+        },
+        banReason: {
+            type: String
         }
     },
     // set this to use virtual below
@@ -56,4 +59,5 @@ userSchema.methods.isCorrectPassword = async function (password) {
 
 const User = model('User', userSchema);
 
+//User.collection.deleteMany({}); // this is used to delete all users on file for dev use only
 module.exports = User;

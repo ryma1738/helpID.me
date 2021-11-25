@@ -7,14 +7,21 @@ const notificationSchema = new Schema(
             default: false,
             required: true
         },
+        onReadDelete: { //Should this notification be deleted off the users schema after it is read? 
+                        //This is for when a mass notification is sent aka the admin sent a notification to everyone
+                        //May change this in the future but right now this works.
+            type: Boolean,
+            default: false,
+            required: true
+        },
         message: {
             type: String,
             maxlength: 100,
             required: true
         },
-        senderID: { //could be auto generated or send from a person. If its send add userId of sender
+        postId: {
             type: Types.ObjectId,
-            ref: "User"
+            ref: "Post"
         },
         createdAt: {
             type: Date,
@@ -25,5 +32,6 @@ const notificationSchema = new Schema(
 );
 
 const Notification = model('Notification', notificationSchema);
+//Notification.collection.deleteMany({})
 
 module.exports = Notification;

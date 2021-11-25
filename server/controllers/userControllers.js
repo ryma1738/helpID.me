@@ -4,7 +4,7 @@ const { signToken } = require('../utils/auth');
 const userController = {
     // find all users 
     getAllUsers(req, res) {
-        User.find({})  
+        User.find({})
             .select('-__v -password -id')
             .then(userData => res.status(200).json(userData))
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
@@ -30,6 +30,9 @@ const userController = {
                 } else {
                     const passwordValid = await userData.isCorrectPassword(req.body.password, userData.password);
                     if (passwordValid) {
+                        if (userData.banReason) { //check if the user is banned
+                            return res.status(403).json({message: "Your account has been banned for policy violations", banReason: userData.banReason})
+                        }
                         const token = signToken(userData);
                         res.status(200).json(token);
                     } else res.status(400).json({ errorMessage: 'Incorrect password' });

@@ -38,5 +38,5 @@ const tipSchema = new Schema(
 
 const Tip = model('Tip', tipSchema);
 
-// Tip.collection.deleteMany({}) // this is used to delete all tips on file for dev use only
+//Tip.collection.deleteMany({}) // this is used to delete all tips on file for dev use only
 module.exports = Tip;

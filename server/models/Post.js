@@ -57,14 +57,6 @@ const postSchema = new Schema(
             type: Types.Decimal128,
             required: true
         },
-        city: {
-            type: String,
-            required: true
-        },
-        state: {
-            type: String,
-            required: true
-        },
         createdAt: {
             type: Date,
             default: Date.now(),

@@ -18,7 +18,7 @@ const postControllers = {
             if (req.query.city) {
                 search.state = req.query.state;
             }
-        } 
+        }
         let options;
         if (req.query.search) {
             options = {
@@ -74,51 +74,51 @@ const postControllers = {
         })
     },
     getOnePost(req, res) {
-        Post.findOne({_id: req.params.id})
-        .select('-__v')
-        .populate('userId', 'username')
+        Post.findOne({ _id: req.params.id })
+            .select('-__v')
+            .populate('userId', 'username')
             .populate({
                 path: "tips",
                 model: "Tip",
                 select: "_id title subject userId anonymous",
                 populate: { path: "userId", model: "User", select: "username" }
             })
-        .populate('categoryId', "_id category")
-        .then(async postDataObject => {
-            if (!postDataObject) {
-                return res.status(404).json({ errorMessage: "Post not found" });
-            }
-            let postData = postDataObject.toJSON();
-            postData.images = encodeImages(postDataObject);
-            delete postData.userId._id;
-            delete postData.userId.id;
-            for (let i = 0; i < postData.tips.length; i++) {
-                if (postData.tips[i].image) {
-                    postData.tips[i].image = {
-                        data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
+            .populate('categoryId', "_id category")
+            .then(async postDataObject => {
+                if (!postDataObject) {
+                    return res.status(404).json({ errorMessage: "Post not found" });
+                }
+                let postData = postDataObject.toJSON();
+                postData.images = encodeImages(postDataObject);
+                delete postData.userId._id;
+                delete postData.userId.id;
+                for (let i = 0; i < postData.tips.length; i++) {
+                    if (postData.tips[i].image) {
+                        postData.tips[i].image = {
+                            data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
+                        }
+                    } if (postData.tips[i].anonymous === true) {
+                        postData.tips[i].userId.userName = "Anonymous";
                     }
-                } if (postData.tips[i].anonymous === true) {
-                    postData.tips[i].userId.userName = "Anonymous";
-                } 
-                delete postData.tips[i].anonymous;
-                delete postData.tips[i].userId._id;
-                delete postData.tips[i].userId.id;
-            }
-            delete postData.id;
-            res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived() })
-        })
-        .catch(err => { 
-            if (err.name === "CastError") {
-                res.status(404).json({ errorMessage: "Post not found" });
-            } else {
-                console.log(err);
-                res.sendStatus(500);
-            }
-        });
+                    delete postData.tips[i].anonymous;
+                    delete postData.tips[i].userId._id;
+                    delete postData.tips[i].userId.id;
+                }
+                delete postData.id;
+                res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived() })
+            })
+            .catch(err => {
+                if (err.name === "CastError") {
+                    res.status(404).json({ errorMessage: "Post not found" });
+                } else {
+                    console.log(err);
+                    res.sendStatus(500);
+                }
+            });
     },
     getUsersPosts(req, res) { // get all posts associated with a user.
-        Post.find({userId: req.user._id})
-            .select('-__v -userId -tips -lat -lon -city -state')
+        Post.find({ userId: req.user._id })
+            .select('-__v -userId -tips -lat -lon')
             .populate('categoryId', "_id category")
             .then(async postDataObject => {
                 if (!postDataObject || postDataObject.length === 0) {
@@ -133,21 +133,21 @@ const postControllers = {
                 }
                 res.status(200).json(compiledPostData);
             })
-            .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err}); });
-    }, 
+            .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err }); });
+    },
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips, edit the post, or send contact requests
-        Post.findOne({_id: req.params.id, userId: req.user._id})
+        Post.findOne({ _id: req.params.id, userId: req.user._id })
             .select('-__v -userId')
-            .populate({ 
-                path: "tips", 
-                model: "Tip", 
+            .populate({
+                path: "tips",
+                model: "Tip",
                 select: "_id title subject userId anonymous",
-                populate: { path: "userId", model: "User", select: "username" } 
+                populate: { path: "userId", model: "User", select: "username" }
             })
             .populate('categoryId', "_id category")
-            .then(async postDataObject  => {
+            .then(async postDataObject => {
                 if (!postDataObject) {
-                    return res.status(404).json({ errorMessage: "Post not found or you do not have permissions to edit this post"});
+                    return res.status(404).json({ errorMessage: "Post not found or you do not have permissions to edit this post" });
                 }
                 const expires = await postDataObject.expiresIn();
                 let postData = postDataObject.toJSON();
@@ -157,7 +157,7 @@ const postControllers = {
                     if (postData.tips[i].image) {
                         postData.tips[i].image = {
                             data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
-                        }  
+                        }
                     } if (postData.tips[i].anonymous === true) {
                         postData.tips[i].userId.username = "Anonymous";
                     }
@@ -166,18 +166,18 @@ const postControllers = {
                     delete postData.tips[i].userId.id;
                 }
                 postData.sameUser = true; // used for front end to tell if its the same user
-                res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived(), expiresIn: expires  })
+                res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived(), expiresIn: expires })
             })
-            .catch(err => { 
+            .catch(err => {
                 if (err.name === "CastError") {
                     res.status(404).json({ errorMessage: "Post not found" });
                 } else {
                     console.log(err)
-                    res.status(500).json({ errorMessage: "Unknown Error", error: err});
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err });
                 }
-             });
+            });
     },
-    async createPost(req, res) { 
+    async createPost(req, res) {
         let images = []
         if (req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
@@ -193,7 +193,7 @@ const postControllers = {
                 if (!categoryData.subCategories.includes(req.body.subCategory)) {
                     return res.status(400).json({ errorMessage: "The category you selected does not contain the sub category " + req.body.subCategory });
                 }
-            } catch(err) {
+            } catch (err) {
                 if (err.name === "CastError") {
                     return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
                 }
@@ -218,51 +218,55 @@ const postControllers = {
             subCategory: req.body.subCategory || undefined,
             images: images,
             video: req.body.video || undefined,
-            contactNumber: req.body.contactNumber || "000-000-0000"
+            contactNumber: req.body.contactNumber || "000-000-0000",
+            lat: req.body.lat,
+            lon: req.body.lon,
+            city: req.body.city,
+            state: req.body.state
         }],
-        { new: true, runValidators: true })
-        .then(postData => res.status(200).json({message: "Post Created Successfully"}))
-        .catch(err => {
-            if (err._message === "Post validation failed") {
-                if (err.errors.categoryId) {
-                    return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
-                } if (err.errors.video) {
-                    return res.status(400).json({ errorMessage: "Video link must be a valid youtube link" });
-                } if (err.errors.summary) {
+            { new: true, runValidators: true })
+            .then(postData => res.status(200).json({ message: "Post Created Successfully" }))
+            .catch(err => {
+                if (err._message === "Post validation failed") {
+                    if (err.errors.categoryId) {
+                        return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
+                    } if (err.errors.video) {
+                        return res.status(400).json({ errorMessage: "Video link must be a valid youtube link" });
+                    } if (err.errors.summary) {
                         if (err.errors.summary.properties.type === "maxlength") {
-                        return res.status(400).json({ errorMessage: "Your summary can not exceed 400 characters long" });
-                    } if (err.errors.summary.properties.type === "required") {
-                        return res.status(400).json({ errorMessage: "You must have a summary for your post" });
+                            return res.status(400).json({ errorMessage: "Your summary can not exceed 400 characters long" });
+                        } if (err.errors.summary.properties.type === "required") {
+                            return res.status(400).json({ errorMessage: "You must have a summary for your post" });
+                        }
                     }
+                    return res.status(400).json({ errorMessage: err.message, errorType: err._message });
+                } else if (err.name === "CastError") {
+                    if (err.kind === "date") {
+                        return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value" });
+                    }
+                    return res.status(400).json({ errorMessage: err.message });
                 }
-                return res.status(400).json({ errorMessage: err.message, errorType: err._message });
-            } else if (err.name === "CastError") {
-                if (err.kind === "date") {
-                    return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value" });
-                }
-                return res.status(400).json({ errorMessage: err.message });
-            }
-            res.status(500).json({ errorMessage: "Unknown Error", error: err});
-        });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+            });
     },
     editImageOrder(req, res) { // maybe
         //Add a feature that allows the user to change the order of the images. What ever image is first is the main one.
         // this can be done by allowing the user to drag and drop them into any order. Once complete it sends the order as an array
         //of the old array indexes, for example [5,3,1,2,0,4] vs [0,1,2,3,4,5], the entire image field is changed accordingly.
     },
-    async editPost(req, res) { 
+    async editPost(req, res) {
         // Images Editing starts
         if (req.body.removeImages || req.files.length > 0) {
             const prePostData = await Post.findOne({ _id: req.params.id, userId: req.user._id }).catch(err => {
                 if (err.name === "CastError") {
                     return res.status(404).json({ errorMessage: "That Post was not found" });
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err});
+                res.status(500).json({ errorMessage: "Unknown Error", error: err });
             })
-            
+
             if (req.body.removeImages && req.files.length > 0) {
                 const totalImages = prePostData.images.length - req.body.removeImages.length + req.files.length;
-                if ( totalImages > 5) {
+                if (totalImages > 5) {
                     for (let i = 0; i < req.files.length; i++) {
                         fs.rm(path.join(__dirname + "/../imageUploads/" + req.files[i].filename), {}, (err) => {
                             if (err) {
@@ -270,7 +274,7 @@ const postControllers = {
                             }
                         });
                     }
-                    return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total"})
+                    return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total" })
                 }
             }
             let i = 0;
@@ -284,7 +288,7 @@ const postControllers = {
                         //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
                     }
                 }
-            }    
+            }
             i = 0;
             if (req.files.length > 0) {
                 if (req.files.length + prePostData.images.length > 5 && !req.body.removeImages) {
@@ -306,7 +310,7 @@ const postControllers = {
                         //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
                     }
                 }
-            }       
+            }
         }
         // Basic edits start
         let postObj = {};
@@ -347,31 +351,31 @@ const postControllers = {
                     }
                 }
             })
-            .catch(err => { 
+            .catch(err => {
                 if (err._message === "Validation failed") {
                     return res.status(400).json({ errorMessage: err.message, errorType: err._message })
                 } else if (err.name === "CastError") {
                     if (err.kind === "date") {
-                        return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value"})
+                        return res.status(400).json({ errorMessage: "You must enter a valid date format for the date value" })
                     }
                     if (err.kind === "ObjectId" && err.path === "_id") {
                         return res.status(404).json({ errorMessage: "That Post was not found" });
                     }
-                    return res.status(400).json({ errorMessage: err.message})
+                    return res.status(400).json({ errorMessage: err.message })
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err});
+                res.status(500).json({ errorMessage: "Unknown Error", error: err });
             });
     },
     deletePost(req, res) {
-        Post.findOneAndDelete({_id: req.params.id, userId: req.user._id})
-        .then(postData => {
-            if (!postData) {
-                res.status(404).json({ errorMessage: "Post not found" })
-            } else {
-                res.status(200).json({ message: "Post deleted successfully" })
-            }
-        })
-        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+        Post.findOneAndDelete({ _id: req.params.id, userId: req.user._id })
+            .then(postData => {
+                if (!postData) {
+                    res.status(404).json({ errorMessage: "Post not found" })
+                } else {
+                    res.status(200).json({ message: "Post deleted successfully" })
+                }
+            })
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     },
     renewPost(req, res) {
         //this function will reset the exportation clock 
@@ -398,11 +402,11 @@ const postControllers = {
                 const diffInDays = Math.round(diffInTime / oneDay);
                 if (diffInDays <= 60) {
                     Post.findOneAndUpdate({ _id: req.params.id, userId: req.user._id }, { createdAt: Date.now() }, { new: true, runValidators: true })
-                    .lean()
-                    .then(postData => res.status(200).json("Your Post has been renewed"))
-                    .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+                        .lean()
+                        .then(postData => res.status(200).json("Your Post has been renewed"))
+                        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
                 } else {
-                    res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old"})
+                    res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old" })
                 }
             }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
     }
