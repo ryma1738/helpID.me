@@ -5,7 +5,7 @@ const userController = {
     // find all users 
     getAllUsers(req, res) {
         User.find({})
-            .select('-__v -password -id')
+            .select('-__v -id')
             .then(userData => res.status(200).json(userData))
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
     },

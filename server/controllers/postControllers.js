@@ -6,41 +6,76 @@ const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } 
 const postControllers = {
     getAllPosts(req, res) {
         let search = {}
-        if (req.query.search) {
-            search.$text = { $search: req.query.search };
-        } if (req.query.categoryId) {
+        if (req.query.categoryId) {
             search.categoryId = req.query.categoryId;
             if (req.query.subCategory) {
                 search.subCategory = req.query.subCategory;
             }
-        } if (req.query.state) {
-            search.state = req.query.state;
-            if (req.query.city) {
-                search.state = req.query.state;
+        } if (req.query.lon && req.query.lat && req.query.maxDistance) { // find all posts within a radius of one point.
+            if (req.query.maxDistance < 1) {
+                return res.status(400)
+            }
+            search.location = {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [req.query.lon, req.query.lat]
+                    },
+                    $maxDistance: req.query.maxDistance <= 500 ? Math.round(req.query.maxDistance * 1609.34) : Math.round(500 * 1609.34) // converts miles into meters
+                }
             }
         }
-        let options;
-        if (req.query.search) {
-            options = {
-                select: '-__v -contactNumber -tips',
-                sort: { score: { $meta: "textScore" } },
-                populate: [{
+        if (search.location) {
+            Post.find(search)  
+            .select('-__v -contactNumber -tips')
+            .populate({
                     path: "userId",
                     model: "User",
                     select: "username"
-                },
-                {
-                    path: "categoryId",
-                    model: "Category",
-                    select: "_id category"
-                }],
-                page: req.query.page || 1,
-                limit: req.query.limit || 20,
-                options: { score: { $meta: "textScore" } }
-                //allowDiskUse: true
-            }
+            })
+            .populate({
+                path: "categoryId",
+                model: "Category",
+                select: "_id category"
+            }).then(postDataObject => {
+                if (postDataObject.length === 0) {
+                    return res.sendStatus(204); // No Content Found
+                }
+                let compiledPostData = [];
+
+                // Set up manual pagination for geoJSON query
+                let limit = parseInt(req.query.limit) || 20; 
+                const totalPages = Math.ceil(postDataObject.length / limit);
+                let page = parseInt(req.query.page) || 1;
+                page = totalPages <= page ? totalPages : page <= 0 ? 1 : page
+
+                const startingIndex = (page === 1) ? 0 : (page - 1) * limit;
+
+                const endingIndex = postDataObject.length % limit === 0 ? page * limit : page === totalPages ?
+                (page - 1) * limit + postDataObject.length % limit : page * limit;
+                
+                for (let i = startingIndex; i < endingIndex; i++) {
+                    let postData = postDataObject[i].toJSON();
+                    postData.images = encodeImage(postData);
+                    delete postData.userId._id;
+                    delete postData.userId.id;
+                    compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
+                }
+                
+                res.status(200).json({data: compiledPostData, pageData: {
+                    totalDocs: postDataObject.length,
+                    limit: limit,
+                    totalPages: totalPages,
+                    page: page,
+                    hasPrevPage: page > 1,
+                    hasNextPage: page < totalPages,
+                    prevPage: page >= 2 && page <= totalPages ? page - 1 : null,
+                    nextPage: page > 0 && page < totalPages ? page + 1 : null,
+                }, 
+                errorMessage: req.query.maxDistance > 500 ? "The maximum search radius is 500 miles. You tried to search for " + req.query.maxDistance + " miles. The search results only represent a 150 mile radius" : undefined});
+            })    
         } else {
-            options = {
+            const options = {
                 select: '-__v -contactNumber -tips',
                 populate: [{
                     path: "userId",
@@ -54,24 +89,26 @@ const postControllers = {
                 }],
                 page: req.query.page || 1,
                 limit: req.query.limit || 20,
+
                 //allowDiskUse: true
             }
+            Post.paginate(search, options, (err, results) => {
+                if (err) {
+                    console.log(err)
+                    return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                }
+                let compiledPostData = [];
+                for (let i = 0; i < results.docs.length; i++) {
+                    let postData = results.docs[i].toJSON();
+                    postData.images = encodeImage(postData);
+                    delete postData.userId._id;
+                    delete postData.userId.id;
+                    compiledPostData.push({ data: postData, totalTips: results.docs[i].tipsReceived() });
+                }
+                delete results.docs;
+                res.status(200).json({ posts: compiledPostData, pageData: results });
+            })
         }
-        Post.paginate(search, options, (err, results) => {
-            if (err) {
-                return res.status(500).json({ errorMessage: "Unknown Error", error: err });
-            }
-            let compiledPostData = [];
-            for (let i = 0; i < results.docs.length; i++) {
-                let postData = results.docs[i].toJSON();
-                postData.images = encodeImage(postData);
-                delete postData.userId._id;
-                delete postData.userId.id;
-                compiledPostData.push({ data: postData, totalTips: results.docs[i].tipsReceived() });
-            }
-            delete results.docs;
-            res.status(200).json({ posts: compiledPostData, pageData: results });
-        })
     },
     getOnePost(req, res) {
         Post.findOne({ _id: req.params.id })
@@ -219,10 +256,7 @@ const postControllers = {
             images: images,
             video: req.body.video || undefined,
             contactNumber: req.body.contactNumber || "000-000-0000",
-            lat: req.body.lat,
-            lon: req.body.lon,
-            city: req.body.city,
-            state: req.body.state
+            location: {coordinates: [req.body.lon, req.body.lat]}
         }],
             { new: true, runValidators: true })
             .then(postData => res.status(200).json({ message: "Post Created Successfully" }))
@@ -409,6 +443,9 @@ const postControllers = {
                     res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old" })
                 }
             }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+    },
+    featurePost(req, res) {
+        // this will be used to allow a user to feature their posts. They will need to pay for it though.
     }
 }
 

@@ -15,18 +15,18 @@ const notificationControllers = {
                 res.status(200).json(userData);
             }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
     },
-    markAsRead(req, res) { // mark notification as read TODO: check if onReadDelete is true before marking as read
+    markAsRead(req, res) { // mark notification as read 
         Notification.findById(req.params.id)
             .select("onReadDelete read")
             .lean()
-            .then(onReadDelete => {
-                if (onReadDelete.onReadDelete === true) {
+            .then(notifyData => {
+                if (notifyData.onReadDelete === true) {
                     User.findByIdAndUpdate(req.user._id,
                         { $pull: { notifications: req.params.id } },
                         { new: true, runValidators: true }).lean()
                         .then(userData => res.sendStatus(200))
                         
-                } else if (onReadDelete.read === true) {
+                } else if (notifyData.read === true) {
                     res.status(400).json({ errorMessage: "This notification is already marked as read"})
                 } else {
                     Notification.findByIdAndUpdate(req.params.id, { read: true }, { new: true, runValidators: true }).lean()

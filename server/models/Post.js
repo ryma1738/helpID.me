@@ -49,13 +49,22 @@ const postSchema = new Schema(
             type: Number,
             default: 0
         },
-        lat: {
-            type: Types.Decimal128,
-            required: true
-        },
-        lon: {
-            type: Types.Decimal128,
-            required: true
+        location: { // uses GeoJSON for the coordinate locations
+            type: {
+                type: String,
+                enum: ['Point'],
+                default: "Point",
+                required: true
+            },
+            coordinates: {
+                type: [Number],
+                required: true
+            }
+        }, //lon, lat
+        featured: {
+            type: Boolean,
+            required: true,
+            default: false
         },
         createdAt: {
             type: Date,
@@ -92,13 +101,14 @@ postSchema.methods.expiresIn = async function () {
     }  
 }
 
-postSchema.index({title: "text", summary: "text"})
+postSchema.index({location: "2dsphere"})
 postSchema.plugin(mongoosePaginate);
 
 const Post = model('Post', postSchema); 
 
 //Post.collection.deleteMany({}); // this is used to delete all posts on file for dev use only
 // async function test() {
+//     //Post.collection.dropIndexes()  
 //     console.log( await Post.collection.indexes())
 // }
 // test()

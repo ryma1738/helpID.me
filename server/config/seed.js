@@ -1,11 +1,18 @@
 const db = require('./connection');
 const { Post, Tip, Category, User } = require('../models');
+const faker = require("faker");
+const fs = require('fs');
+const path = require("path");
+const bcrypt = require("bcrypt");
 require('dotenv').config();
 
 db.once('open', async () => {
+try {
 
     await Category.deleteMany({});
-    await User.deleteOne({ username: 'Site Admin'})
+    await User.deleteMany({});
+    await Post.deleteMany({});
+    await Tip.deleteMany({});
 
     Category.insertMany([
         {
@@ -92,7 +99,74 @@ db.once('open', async () => {
         },
     ]);
     console.log("Categories Seeded");
+
+    let users = []
+    const password = await bcrypt.hash("Password", 10);
+    for (let i = 0; i < 20000; i++) {
+        users.push({
+            username: "user_" + i,
+            email: "user_" + i + "@gmail.com",
+            password: password,
+            phoneNumber: faker.phone.phoneNumberFormat(0)
+        })
+    }
+    await User.insertMany(users, { new: true, runValidators: true })
+    const userData = await User.find({}).select("_id").lean();
+    let userIds = [];
+    for (let i = 0; i < userData.length; i++) {
+        userIds.push(userData[i]._id);
+    }
+    console.log("Users Seeded");
+        
+    let posts = []
+    const image = {
+        data: fs.readFileSync(path.join(__dirname + "/../imageUploads/1581977710_bbb.jpg")),
+        contentType: "image/jpg"
+    }
+    const categories = await Category.find({}).select("_id").lean();
+    let categoryIds = [];
+    for (let i = 0; i < categories.length; i++) {
+        categoryIds.push(categories[i]._id);
+    }
     
+    for (let i = 0; i < 10000; i++) {
+        let post = {
+            title: faker.name.title(),
+            date: faker.date.past(1),
+            summary: faker.lorem.paragraph(2),
+            userId: faker.random.arrayElement(userIds),
+            categoryId: faker.random.arrayElement(categoryIds),
+            subCategory: undefined,
+            images: [image, image, image, image],
+            video: undefined,
+            contactNumber: "000-000-0000",
+            location: {coordinates: [faker.address.longitude(-124.6509, -66.8628), faker.address.latitude(47.455, 24.3959)]}
+        }
+        posts.push(post)
+    }
+
+    await Post.insertMany(posts);
+    console.log("Posts Seeded")
+
+    const getPosts = await Post.find({}).select("_id").lean()
+    let postIds = [];
+    for (let i = 0; i < getPosts.length; i++) {
+        postIds.push(getPosts[i]._id);
+    }
+
+    let tips = [];
+    for (let i = 0; i < 8000; i++) {
+        tips.push({
+            title: faker.lorem.words(3),
+            subject: faker.lorem.paragraph(2),
+            userId: faker.random.arrayElement(userIds),
+            postId: faker.random.arrayElement(postIds)
+        })
+    }
+
+    await Tip.insertMany(tips)
+    console.log("Tips Seeded")
+
     await User.create({
         username: 'Site Admin',
         email: process.env.ADMIN_EMAIL,
@@ -100,5 +174,8 @@ db.once('open', async () => {
         admin: true
     });
     console.log("Admin Seeded");
+} catch(err) {
+    console.log(err)
+}
     process.exit();
 });

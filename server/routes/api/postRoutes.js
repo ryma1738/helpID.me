@@ -39,7 +39,8 @@ const upload = multer({ // upload multiple images upto 5
 
 // routes begin
 router.route('/')
-    .get(getAllPosts) // ✓ Can accept search queries: ?search=SomeTextHere&categoryId=61984622061b19dbb057d6d9
+    .get(getAllPosts) // ✓ Can accept search queries: ?&categoryId=61984622061b19dbb057d6d9&subCategory=
+                     //&limit=100&page=6&lon=-112.027238&lat=40.321024&maxDistance=600
     .post(verifyToken, (req, res) => {
         upload(req, res, function (err) { //middleware for multer error handling and file uploads
             if (err instanceof multer.MulterError) {
