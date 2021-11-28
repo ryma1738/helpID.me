@@ -20,18 +20,17 @@ module.exports = {
                 .split(' ')
                 .pop()
                 .trim();
+            try {
+                // decode and attach user data to request object
+                const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
+                req.user = data;
+                next()
+            } catch {
+                res.sendStatus(401);
+            }
         } else {
             res.sendStatus(401);
         }
-        try {
-            // decode and attach user data to request object
-            const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
-            req.user = data;
-            next()
-        } catch {
-            res.sendStatus(401);
-        }
-
     },
     verifyTokenAdmin(req, res, next) {
         let token = req.headers.authorization;
@@ -43,26 +42,25 @@ module.exports = {
                 .split(' ')
                 .pop()
                 .trim();
-        } else {
-            res.sendStatus(401);
-        }
-
-        try {
-            // decode and attach user data to request object
-            const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
-            if (data.admin === true) {
-                User.findOne({ _id: data._id })
-                    .then(userData => {
-                        if (userData.admin === true) {
-                            req.user = data;
-                            next();
-                        } else res.status(403).json({ message: 'You do not have the rights to access this content!' });
-                    })
-                    .catch(err => res.status(500).json(err));
-            } else {
-                res.status(403).json({ message: 'You do not have the rights to access this content!' });
+            try {
+                // decode and attach user data to request object
+                const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
+                if (data.admin === true) {
+                    User.findOne({ _id: data._id })
+                        .then(userData => {
+                            if (userData.admin === true) {
+                                req.user = data;
+                                next();
+                            } else res.status(403).json({ message: 'You do not have the rights to access this content!' });
+                        })
+                        .catch(err => res.status(500).json(err));
+                } else {
+                    res.status(403).json({ message: 'You do not have the rights to access this content!' });
+                }
+            } catch {
+                res.sendStatus(401);
             }
-        } catch {
+        } else {
             res.sendStatus(401);
         }
     }

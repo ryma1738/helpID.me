@@ -1,10 +1,10 @@
-const { Post, Category } = require("../models");
+const { Post, Category, Tip } = require("../models");
 const fs = require('fs');
 const path = require('path');
 const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } = require('../utils/helpers')
 
 const postControllers = {
-    getAllPosts(req, res) {
+    getAllPosts(req, res) { // add sorting to getAllPosts
         let search = {}
         if (req.query.categoryId) {
             search.categoryId = req.query.categoryId;
@@ -13,7 +13,7 @@ const postControllers = {
             }
         } if (req.query.lon && req.query.lat && req.query.maxDistance) { // find all posts within a radius of one point.
             if (req.query.maxDistance < 1) {
-                return res.status(400)
+                return res.status(400).json({ errorMessage: "The smallest search radius allowed is 1 mile."})
             }
             search.location = {
                 $near: {
@@ -21,13 +21,41 @@ const postControllers = {
                         type: "Point",
                         coordinates: [req.query.lon, req.query.lat]
                     },
-                    $maxDistance: req.query.maxDistance <= 500 ? Math.round(req.query.maxDistance * 1609.34) : Math.round(500 * 1609.34) // converts miles into meters
+                    $maxDistance: req.query.maxDistance <= 250 ? Math.round(req.query.maxDistance * 1609.34) : Math.round(250 * 1609.34) // converts miles into meters
                 }
             }
         }
+        let sort = null;
+        if (req.query.sort) {
+            switch (req.query.sort) {
+                case "Most Recent":
+                    sort = { createdAt: "desc" };
+                    break;
+                case "Most Recent Inv":
+                    sort = { createdAt: "asc" };
+                    break;
+                case "Popular":
+                    sort = { views: "desc" };
+                    break;
+                case "Popular Inv":
+                    sort = { views: "asc" };
+                    break;
+                case "Reward":
+                    sort = { reward: "desc" };
+                    break;
+                case "Reward Inv":
+                    sort = { reward: "asc" };
+                    break;
+                case "Date of Incident":
+                    sort = { date: "desc" }
+                    break;
+                case "Date of Incident Inv":
+                    sort = { date: "asc" }
+            }
+        }
         if (search.location) {
-            Post.find(search)  
-            .select('-__v -contactNumber -tips')
+            Post.find(search, null, {allowDiskUse: true})  
+            .select('-__v -contactNumber -reward -tips')
             .populate({
                     path: "userId",
                     model: "User",
@@ -37,7 +65,8 @@ const postControllers = {
                 path: "categoryId",
                 model: "Category",
                 select: "_id category"
-            }).then(postDataObject => {
+            })
+            .sort(sort).then(postDataObject => {
                 if (postDataObject.length === 0) {
                     return res.sendStatus(204); // No Content Found
                 }
@@ -45,9 +74,10 @@ const postControllers = {
 
                 // Set up manual pagination for geoJSON query
                 let limit = parseInt(req.query.limit) || 20; 
+                limit = limit > 100 ? 100 : limit < 1 ? 1 : limit;
                 const totalPages = Math.ceil(postDataObject.length / limit);
                 let page = parseInt(req.query.page) || 1;
-                page = totalPages <= page ? totalPages : page <= 0 ? 1 : page
+                page = totalPages <= page ? totalPages : page <= 0 ? 1 : page;
 
                 const startingIndex = (page === 1) ? 0 : (page - 1) * limit;
 
@@ -59,7 +89,7 @@ const postControllers = {
                     postData.images = encodeImage(postData);
                     delete postData.userId._id;
                     delete postData.userId.id;
-                    compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived() });
+                    compiledPostData.push({ data: postData });
                 }
                 
                 res.status(200).json({data: compiledPostData, pageData: {
@@ -72,11 +102,16 @@ const postControllers = {
                     prevPage: page >= 2 && page <= totalPages ? page - 1 : null,
                     nextPage: page > 0 && page < totalPages ? page + 1 : null,
                 }, 
-                errorMessage: req.query.maxDistance > 500 ? "The maximum search radius is 500 miles. You tried to search for " + req.query.maxDistance + " miles. The search results only represent a 150 mile radius" : undefined});
-            })    
+                message: req.query.maxDistance > 250 ? "The maximum search radius is 250 miles. You tried to search for " + req.query.maxDistance + " miles. The search results only represent a 250 mile radius" : undefined});
+            }).catch(err => {
+                if (err.code === 2) {
+                    return res.status(400).json({ errorMessage: "The Longitude or Latitude values are invalid"})
+                }
+                res.status(500).json({ errorMessage: "Unknown Error", error: err })
+            })
         } else {
             const options = {
-                select: '-__v -contactNumber -tips',
+                select: '-__v -contactNumber -reward -tips',
                 populate: [{
                     path: "userId",
                     model: "User",
@@ -87,10 +122,10 @@ const postControllers = {
                     model: "Category",
                     select: "_id category"
                 }],
+                sort: sort,
                 page: req.query.page || 1,
-                limit: req.query.limit || 20,
-
-                //allowDiskUse: true
+                limit: req.query.limit ? parseInt(req.query.limit) > 100 ? 100 : parseInt(req.query.limit) < 1 ? 1 : parseInt(req.query.limit) : 20,
+                allowDiskUse: true
             }
             Post.paginate(search, options, (err, results) => {
                 if (err) {
@@ -103,7 +138,7 @@ const postControllers = {
                     postData.images = encodeImage(postData);
                     delete postData.userId._id;
                     delete postData.userId.id;
-                    compiledPostData.push({ data: postData, totalTips: results.docs[i].tipsReceived() });
+                    compiledPostData.push({ data: postData });
                 }
                 delete results.docs;
                 res.status(200).json({ posts: compiledPostData, pageData: results });
@@ -112,7 +147,7 @@ const postControllers = {
     },
     getOnePost(req, res) {
         Post.findOne({ _id: req.params.id })
-            .select('-__v')
+            .select('-__v -reward')
             .populate('userId', 'username')
             .populate({
                 path: "tips",
@@ -154,9 +189,38 @@ const postControllers = {
             });
     },
     getUsersPosts(req, res) { // get all posts associated with a user.
+        let sort = null;
+        if (req.query.sort) {
+            switch (req.query.sort) {
+                case "Most Recent":
+                    sort = { createdAt: "desc" };
+                    break;
+                case "Most Recent Inv":
+                    sort = { createdAt: "asc" };
+                    break;
+                case "Popular":
+                    sort = { views: "desc" };
+                    break;
+                case "Popular Inv":
+                    sort = { views: "asc" };
+                    break;
+                case "Reward":
+                    sort = { reward: "desc" };
+                    break;
+                case "Reward Inv":
+                    sort = { reward: "asc" };
+                    break;
+                case "Date of Incident":
+                    sort = { date: "desc" }
+                    break;
+                case "Date of Incident Inv":
+                    sort = { date: "asc" }
+            }
+        }
         Post.find({ userId: req.user._id })
-            .select('-__v -userId -tips -lat -lon')
+            .select('-__v -userId -reward -lat -lon')
             .populate('categoryId', "_id category")
+            .sort(sort)
             .then(async postDataObject => {
                 if (!postDataObject || postDataObject.length === 0) {
                     return res.sendStatus(204);
@@ -165,6 +229,7 @@ const postControllers = {
                 for (let i = 0; i < postDataObject.length; i++) {
                     let postData = postDataObject[i].toJSON();
                     postData.images = encodeImage(postData);
+                    delete postData.tips;
                     const expires = await postDataObject[i].expiresIn();
                     compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived(), expiresIn: expires });
                 }
@@ -174,7 +239,7 @@ const postControllers = {
     },
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips, edit the post, or send contact requests
         Post.findOne({ _id: req.params.id, userId: req.user._id })
-            .select('-__v -userId')
+            .select('-__v -reward -userId')
             .populate({
                 path: "tips",
                 model: "Tip",
@@ -407,6 +472,7 @@ const postControllers = {
                     res.status(404).json({ errorMessage: "Post not found" })
                 } else {
                     res.status(200).json({ message: "Post deleted successfully" })
+                    Tip.deleteMany({postId: req.params.id}).catch(err => console.log(err));
                 }
             })
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
@@ -446,6 +512,11 @@ const postControllers = {
     },
     featurePost(req, res) {
         // this will be used to allow a user to feature their posts. They will need to pay for it though.
+        // Future development
+    },
+    setReward(req, res) {
+        // This route will process payment for the reward at time of creation for the post
+        // Future development
     }
 }
 

@@ -139,6 +139,7 @@ try {
             subCategory: undefined,
             images: [image, image, image, image],
             video: undefined,
+            reward: faker.finance.amount(),
             contactNumber: "000-000-0000",
             location: {coordinates: [faker.address.longitude(-124.6509, -66.8628), faker.address.latitude(47.455, 24.3959)]}
         }
@@ -165,6 +166,15 @@ try {
     }
 
     await Tip.insertMany(tips)
+
+    const tipsForPosts = await Tip.find({}).select("_id postId").lean();
+    let i = 0;
+    while (i < tipsForPosts.length) {
+       await Post.findByIdAndUpdate(tipsForPosts[i].postId, { $push: { tips: tipsForPosts[i]._id } }).lean()
+       i++;
+    }
+        
+
     console.log("Tips Seeded")
 
     await User.create({

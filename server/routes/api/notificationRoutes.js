@@ -1,14 +1,15 @@
 const router = require('express').Router();
-const { User, Notification } = require("../../models");
 const { verifyTokenAdmin, verifyToken } = require('../../utils/auth')
 const {
     notifyUser, 
     markAsRead,
-    test
+    test,
+    communicationRequest
 } = require("../../controllers/notificationControllers");
 
 router.route('/')
-    .get(verifyToken, notifyUser);
+    .get(verifyToken, notifyUser)
+    .post(verifyToken, communicationRequest)
 
 router.route('/:id')
     .put(verifyToken, markAsRead);

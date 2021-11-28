@@ -66,6 +66,9 @@ const postSchema = new Schema(
             required: true,
             default: false
         },
+        reward: {
+            type: Types.Decimal128
+        },
         createdAt: {
             type: Date,
             default: Date.now(),
