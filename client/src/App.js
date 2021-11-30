@@ -14,7 +14,7 @@ function App() {
     // credit: https://stackoverflow.com/questions/65049812/how-to-call-a-function-every-minute-in-a-react-component/65049865
     let cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)loggedIn\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     console.log({cookie: cookieValue});
-    if (cookieValue || cookieValue === true) {
+    if (cookieValue) {
       setLoggedIn(true)
     }
     const interval = setInterval(async () => {
@@ -25,7 +25,7 @@ function App() {
       } else {
         setLoggedIn(false);
       }
-    }, 200000);
+    }, 140000);
 
     return () => clearInterval(interval); 
     // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.

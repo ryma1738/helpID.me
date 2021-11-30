@@ -4,3 +4,9 @@ export const renewLogin = () => {
         method: "GET"
     });
 }
+
+export const checkNotifications = () => {
+    return fetch('/api/notification/', {
+        method: "GET"
+    });
+}
