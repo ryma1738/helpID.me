@@ -7,6 +7,7 @@ const {
     createUser,
     updateUser,
     deleteUser,
+    renewToken,
 } = require('../../controllers/userControllers');
 
 router.route('/')
@@ -19,6 +20,9 @@ router.route('/login')
 
 router.route('/signup')
     .post(createUser); //  - body: {username: <username>, email: <email>, password: <password>, phoneNumber: <801-888-8888> }
+
+router.route('/renew')
+    .get(verifyToken, renewToken);
 
 router.route('/admin')
     .get(verifyTokenAdmin, getAllUsers)

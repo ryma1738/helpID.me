@@ -3,26 +3,21 @@ require('dotenv').config();
 const { User } = require('../models');
 
 const secret = process.env.JWT_SECRET;
-const expiration = '2h';
+const expiration = '3m';
 
 module.exports = {
-    signToken({ username, email, _id, admin }) {
-        const payload = { username, email, _id, admin };
+    signToken({ username, email, _id, admin, banReason }) {
+        const payload = { username, email, _id, admin, banReason };
         return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
     },
     verifyToken(req, res, next) {
-        let token = req.headers.authorization;
-        let bearerToken;
+        let token = req.cookies.jwt || undefined;
 
-        // separate "Bearer" from "<tokenvalue>"
         if (token) {
-            bearerToken = token
-                .split(' ')
-                .pop()
-                .trim();
+
             try {
                 // decode and attach user data to request object
-                const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
+                const { data } = jwt.verify(token, secret, { maxAge: expiration });
                 req.user = data;
                 next()
             } catch {
@@ -33,18 +28,12 @@ module.exports = {
         }
     },
     verifyTokenAdmin(req, res, next) {
-        let token = req.headers.authorization;
-        let bearerToken;
+        let token = req.cookies.jwt || undefined;
 
-        // separate "Bearer" from "<tokenvalue>"
         if (token) {
-            bearerToken = token
-                .split(' ')
-                .pop()
-                .trim();
             try {
                 // decode and attach user data to request object
-                const { data } = jwt.verify(bearerToken, secret, { maxAge: expiration });
+                const { data } = jwt.verify(token, secret, { maxAge: expiration });
                 if (data.admin === true) {
                     User.findOne({ _id: data._id })
                         .then(userData => {

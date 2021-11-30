@@ -16,7 +16,7 @@ const notificationSchema = new Schema(
         },
         message: {
             type: String,
-            maxlength: 100,
+            maxlength: 600,
             required: true
         },
         postId: {

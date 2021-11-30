@@ -43,7 +43,7 @@ const postSchema = new Schema(
         },
         tips: [{
             type: Types.ObjectId,
-            ref: 'Tip' 
+            ref: 'Tip'
         }],
         views: { // could create a localStorage variable that lists each post id visited and will only update the count if the post id is not found.
             type: Number,
@@ -111,7 +111,7 @@ const Post = model('Post', postSchema);
 
 //Post.collection.deleteMany({}); // this is used to delete all posts on file for dev use only
 // async function test() {
-//     //Post.collection.dropIndexes()  
+//     await Post.collection.dropIndexes()  
 //     console.log( await Post.collection.indexes())
 // }
 // test()

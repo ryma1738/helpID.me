@@ -7,14 +7,14 @@ const userController = {
         User.find({})
             .select('-__v -id')
             .then(userData => res.status(200).json(userData))
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }));
     },
 
     getOneUser(req, res) {
         User.findById(req.user._id)
             .select('-__v -password')
             .then(userData => res.status(200).json(userData))
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
 
     // login with email and password
@@ -31,14 +31,24 @@ const userController = {
                     const passwordValid = await userData.isCorrectPassword(req.body.password, userData.password);
                     if (passwordValid) {
                         if (userData.banReason) { //check if the user is banned
-                            return res.status(403).json({message: "Your account has been banned for policy violations", banReason: userData.banReason})
+                            return res.status(403).json({ message: "Your account has been banned for policy violations", banReason: userData.banReason })
                         }
                         const token = signToken(userData);
-                        res.status(200).json(token);
+                        const expires = new Date(new Date().getTime() + 210 * 1000);
+                        res.status(200)
+                            .cookie("jwt", token, { 
+                                sameSite: "strict", 
+                                expires: expires, 
+                                httpOnly: true,
+                                secure: true
+                            }).cookie("loggedIn", true, {
+                                sameSite: "strict",
+                                expires: expires
+                            }).json("User LoggedIn");
                     } else res.status(400).json({ errorMessage: 'Incorrect password' });
                 }
             })
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
 
     // Create new user
@@ -52,7 +62,16 @@ const userController = {
             { new: true, runValidators: true })
             .then(userData => {
                 const token = signToken(userData[0]);
-                res.status(200).json(token);
+                const expires = new Date(new Date().getTime() + 210 * 1000);
+                res.status(200).cookie("jwt", token, {
+                    sameSite: "strict",
+                    expires: expires,
+                    httpOnly: true,
+                    secure: true
+                }).cookie("loggedIn", true, {
+                    sameSite: "strict",
+                    expires: expires
+                }).json("User Created");
             })
             .catch(err => res.status(500).json({ errorMessage: 'A user with this email already exists. Please login or use a different email.', error: err }));
     },
@@ -88,7 +107,7 @@ const userController = {
                 const token = signToken(userData);
                 res.status(200).json([userData, token]);
             })
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
 
     // delete user TODO: delete all of the users posts but not their tips
@@ -98,7 +117,22 @@ const userController = {
                 if (Object.keys(userData).length === 0) return res.status(400).json({ errorMessage: 'This user does not exist!' })
                 res.status(200).json({ message: 'This user was deleted!' })
             })
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));;
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }));;
+    },
+    renewToken(req, res) {
+        User.findById(req.user._id).lean().then(userData => {
+            const token = signToken(userData);
+            const expires = new Date(new Date().getTime() + 210 * 1000)
+            res.status(200).cookie("jwt", token, {
+                sameSite: "strict",
+                expires: expires,
+                httpOnly: true,
+                secure: true
+            }).cookie("loggedIn", true, {
+                sameSite: "strict",
+                expires: expires
+            }).json("Token Renewed");
+        }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     }
 }
 

@@ -4,15 +4,17 @@ const {
     notifyUser, 
     markAsRead,
     test,
-    communicationRequest
+    communicationRequest,
+    deleteNotification
 } = require("../../controllers/notificationControllers");
 
 router.route('/')
-    .get(verifyToken, notifyUser)
-    .post(verifyToken, communicationRequest)
+    .get(verifyToken, notifyUser) // ✓ get all notifications
+    .post(verifyToken, communicationRequest) // ✓
 
 router.route('/:id')
-    .put(verifyToken, markAsRead);
+    .put(verifyToken, markAsRead) // ✓
+    .delete(verifyToken, deleteNotification); // ✓
 
 router.route('/test')
     .get(test);

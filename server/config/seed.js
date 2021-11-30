@@ -129,7 +129,7 @@ try {
         categoryIds.push(categories[i]._id);
     }
     
-    for (let i = 0; i < 10000; i++) {
+    for (let i = 0; i < 8000; i++) {
         let post = {
             title: faker.name.title(),
             date: faker.date.past(1),

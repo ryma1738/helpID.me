@@ -15,18 +15,17 @@ const tipControllers = {
     },
     async createTip(req, res) {
         try {
-            const postData = await Post.findById(req.body.id).select('userId').populate("userId")
-            const userData = postData.toJSON()
-            if (userData.userId.id === req.user._id) {
+            const postData = await Post.findById(req.body.id).select('userId').lean();
+            if (postData.userId === req.user._id) {
                 return res.status(403).json({ errorMessage: "You can not add a tip to your own post" })
             }
         } catch (err) {
             if (err.name === "CastError") {
                 return res.status(400).json({ errorMessage: "Post was not found" })
             }
-            return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+            return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
         }
-
+        
         Tip.create([{
             title: req.body.title,
             subject: req.body.subject,
@@ -38,21 +37,34 @@ const tipControllers = {
             } : undefined
         }], { new: true, runValidators: true })
             .then(data => {
-                Tip.findOne({ subject: req.body.subject }).select("_id id").then(tipData => {
+                Tip.findOne({ _id: data[0]._id }).select("_id postId id").then(tipData => {
                     Post.findByIdAndUpdate(req.body.id, { $push: { tips: tipData._id } }, { new: true, runValidators: true }).lean()
-                        .then(async postData => {
-                            res.status(200).json({ message: 'Tip was added successfully' });
-                            const notifyData = await Notification.create([{ //create notification for user so they know they got a tip
-                                message: "Someone sent a tip to your post: " + postData.title,
-                                postId: postData._id
-                            }], { new: true, runValidators: true }).lean();
-                            User.findByIdAndUpdate(postData.userId, 
-                                { $push: { notifications: notifyData[0]._id } },
-                                { new: true, runValidators: true }).lean()
-                                .catch(err => console.log(err));
+                        .then(postData => {
+                            console.log(postData.title)  
+                                Notification.create([{ //create notification for user so they know they got a tip
+                                    message: "Someone sent a tip to your post: " + postData.title,
+                                    postId: req.body.id
+                                }], { new: true, runValidators: true})
+                                .then(notifyData => {
+                                    User.findByIdAndUpdate(postData.userId,
+                                        { $push: { notifications: notifyData[0]._id } },
+                                        { new: true, runValidators: true }).lean()
+                                        .then(userData => res.status(200).json({ message: 'Tip was added successfully' }))
+                                        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
+                                })
+                                .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }));
                         })
-                        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
-                }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }));
+                        .catch(async err => {
+                            res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
+                            await Tip.deleteOne({ _id: tipData._id });
+                            await Post.findByIdAndUpdate(tipData.postId, { $pull: {tips: tipData._id } });
+
+                        });
+                }).catch(async err => {
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
+                    await Tip.deleteOne({ _id: tipData._id });
+                    await Post.findByIdAndUpdate(tipData.postId, { $pull: { tips: tipData._id } });
+                });
             })
             .catch(err => {
                 if (err.name === "ValidationError") {
@@ -68,7 +80,7 @@ const tipControllers = {
 
                 } else {
                     console.log(err)
-                    res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                 }
             });
 
@@ -114,7 +126,7 @@ const tipControllers = {
                 res.status(200).json({ message: "Tip updated successfully" });
             })
             .catch(err => {
-                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             });
         if (req.file) {
             fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
@@ -130,9 +142,18 @@ const tipControllers = {
                 if (!tipData) {
                     return res.status(404).json({ message: "Tip not found or you do not have permissions to delete this tip" })
                 }
-                res.status(200).json({ message: 'Tip deleted successfully' })
+                Post.findByIdAndUpdate(tipData.postId, { $pull: { tips: tipData._id } }, {runValidators: true}).lean()
+                    .then(postData => res.status(200).json({ message: 'Tip deleted successfully' }))
+                    .catch(err => {
+                        res.status(200).json({ 
+                            message: 'Tip deleted successfully with exception: Tip id was not removed from post due to error', 
+                            error: err
+                        });
+                    })
+                
+                
             }).catch(err => {
-                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             })
     }
 };

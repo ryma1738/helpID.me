@@ -107,7 +107,7 @@ const postControllers = {
                 if (err.code === 2) {
                     return res.status(400).json({ errorMessage: "The Longitude or Latitude values are invalid"})
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err })
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
             })
         } else {
             const options = {
@@ -130,7 +130,7 @@ const postControllers = {
             Post.paginate(search, options, (err, results) => {
                 if (err) {
                     console.log(err)
-                    return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                    return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                 }
                 let compiledPostData = [];
                 for (let i = 0; i < results.docs.length; i++) {
@@ -235,7 +235,7 @@ const postControllers = {
                 }
                 res.status(200).json(compiledPostData);
             })
-            .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err }); });
+            .catch(err => { res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }); });
     },
     getUserPost(req, res) { // only user has access to this post, this is when they can view tips, edit the post, or send contact requests
         Post.findOne({ _id: req.params.id, userId: req.user._id })
@@ -275,7 +275,7 @@ const postControllers = {
                     res.status(404).json({ errorMessage: "Post not found" });
                 } else {
                     console.log(err)
-                    res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                 }
             });
     },
@@ -299,7 +299,7 @@ const postControllers = {
                 if (err.name === "CastError") {
                     return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
                 }
-                return res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             }
         }
         if (req.files.length > 0) {
@@ -345,7 +345,7 @@ const postControllers = {
                     }
                     return res.status(400).json({ errorMessage: err.message });
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             });
     },
     editImageOrder(req, res) { // maybe
@@ -360,7 +360,7 @@ const postControllers = {
                 if (err.name === "CastError") {
                     return res.status(404).json({ errorMessage: "That Post was not found" });
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             })
 
             if (req.body.removeImages && req.files.length > 0) {
@@ -462,7 +462,7 @@ const postControllers = {
                     }
                     return res.status(400).json({ errorMessage: err.message })
                 }
-                res.status(500).json({ errorMessage: "Unknown Error", error: err });
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             });
     },
     deletePost(req, res) {
@@ -475,7 +475,7 @@ const postControllers = {
                     Tip.deleteMany({postId: req.params.id}).catch(err => console.log(err));
                 }
             })
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
     renewPost(req, res) {
         //this function will reset the exportation clock 
@@ -504,11 +504,11 @@ const postControllers = {
                     Post.findOneAndUpdate({ _id: req.params.id, userId: req.user._id }, { createdAt: Date.now() }, { new: true, runValidators: true })
                         .lean()
                         .then(postData => res.status(200).json("Your Post has been renewed"))
-                        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+                        .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
                 } else {
                     res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old" })
                 }
-            }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err }))
+            }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
     featurePost(req, res) {
         // this will be used to allow a user to feature their posts. They will need to pay for it though.

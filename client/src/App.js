@@ -1,24 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import './style.css';
+import { Routes, Route, BrowserRouter, } from 'react-router-dom';
+import { renewLogin } from './utils/api';
+import Navigator from "./components/Navbar";
+import Footer from "./components/Footer";
+import Main from "./pages/Main";
 
 function App() {
+
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    // credit: https://stackoverflow.com/questions/65049812/how-to-call-a-function-every-minute-in-a-react-component/65049865
+    let cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)loggedIn\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    console.log({cookie: cookieValue});
+    if (cookieValue || cookieValue === true) {
+      setLoggedIn(true)
+    }
+    const interval = setInterval(async () => {
+      const response = await renewLogin();
+      if (response.ok && document.cookie) {
+        console.log("worked")
+        setLoggedIn(true);
+      } else {
+        setLoggedIn(false);
+      }
+    }, 200000);
+
+    return () => clearInterval(interval); 
+    // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
+  }, [])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter as='main'>
+      <Navigator loggedIn={loggedIn}/>
+      <Routes>
+        <Route exact path='/' component={Main} />
+      </Routes>
+      {/* <Footer /> */}
+    </BrowserRouter>
   );
 }
 
