@@ -71,6 +71,7 @@ const postControllers = {
                     return res.sendStatus(204); // No Content Found
                 }
                 let compiledPostData = [];
+                let markers = [];
 
                 // Set up manual pagination for geoJSON query
                 let limit = parseInt(req.query.limit) || 20; 
@@ -90,6 +91,12 @@ const postControllers = {
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
+                    markers.push({
+                        lat: postData.location.coordinates[1],
+                        lon: postData.location.coordinates[0],
+                        _id: postData._id,
+                        title: postData.title,
+                    })
                 }
                 
                 res.status(200).json({data: compiledPostData, pageData: {
@@ -101,7 +108,8 @@ const postControllers = {
                     hasNextPage: page < totalPages,
                     prevPage: page >= 2 && page <= totalPages ? page - 1 : null,
                     nextPage: page > 0 && page < totalPages ? page + 1 : null,
-                }, 
+                },
+                markers: markers,
                 message: req.query.maxDistance > 250 ? "The maximum search radius is 250 miles. You tried to search for " + req.query.maxDistance + " miles. The search results only represent a 250 mile radius" : undefined});
             }).catch(err => {
                 if (err.code === 2) {
@@ -133,15 +141,22 @@ const postControllers = {
                     return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                 }
                 let compiledPostData = [];
+                let markers = [];
                 for (let i = 0; i < results.docs.length; i++) {
                     let postData = results.docs[i].toJSON();
                     postData.images = encodeImage(postData);
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
+                    markers.push({
+                        lat: postData.location.coordinates[1],
+                        lon: postData.location.coordinates[0],
+                        _id: postData._id,
+                        title: postData.title,
+                    })
                 }
                 delete results.docs;
-                res.status(200).json({ posts: compiledPostData, pageData: results });
+                res.status(200).json({ posts: compiledPostData, pageData: results, markers: markers });
             })
         }
     },

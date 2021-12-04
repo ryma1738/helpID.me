@@ -34,6 +34,7 @@ function App() {
   return (
     <BrowserRouter as='main'>
       <Navigator loggedIn={loggedIn}/>
+      <Main />
       <Routes>
         <Route exact path='/' component={Main} />
       </Routes>

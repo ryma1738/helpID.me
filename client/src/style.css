@@ -40,6 +40,13 @@ body {
   max-width: 100%;
 }
 
+/* Main Styles */
+.sortRow {
+  border-bottom: 5px solid var(--cyan);
+}
+
+
+
 
 
 /* --------------------------------------- */
