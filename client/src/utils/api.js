@@ -11,8 +11,8 @@ export const checkNotifications = () => {
     });
 }
 
-export const getAllPosts = (categoryId = "", subCategory = "", lon = "", lat = "", maxDistance="", sort = "Most Recent" ) => {
-    return fetch(`/api/post/?categoryId=${categoryId}&subCategory=${subCategory}&sort=${sort}&limit=20&page=2&lon=-112.027238&lat=40.321024&maxDistance=250`, {
+export const getAllPosts = (lon = "", lat = "", maxDistance = 50, page = 1, limit = 20, sort = "Most Recent", categoryId = "", subCategory = "" ) => {
+    return fetch(`/api/post/?categoryId=${categoryId}&subCategory=${subCategory}&sort=${sort}&limit=${limit}&page=${page}&lon=${lon}&lat=${lat}&maxDistance=${maxDistance}`, {
         method: "GET"
     });
 }

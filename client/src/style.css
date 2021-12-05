@@ -45,6 +45,27 @@ body {
   border-bottom: 5px solid var(--cyan);
 }
 
+.mainMap {
+  height: 100%;
+  width: 90%;
+}
+
+.selectorMap {
+  height: 300px;
+  width: 90%;
+}
+
+.postCards {
+  box-shadow: 0px 1px 5px black;
+
+}
+
+.postCards img,
+.postCards iframe {
+  max-height: 400px;
+  max-width: 100%;
+  
+}
 
 
 
@@ -61,6 +82,10 @@ body {
 @media(max-width: 768px) {
 .navbarLogo {
   content: url('./assets/images/NavbarLogo-Mobile.png');
+}
+
+.mainMap {
+  width: 100%;
 }
 
 }

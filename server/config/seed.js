@@ -123,13 +123,26 @@ try {
         data: fs.readFileSync(path.join(__dirname + "/../imageUploads/1581977710_bbb.jpg")),
         contentType: "image/jpg"
     }
+    const image1 = {
+        data: fs.readFileSync(path.join(__dirname + "/../imageUploads/life_is_strange___blazing_up_by_friedrichsteiner-dar73po.png")),
+        contentType: "image/jpg"
+    }
+    const image2 = {
+        data: fs.readFileSync(path.join(__dirname + "/../imageUploads/1535796377_steamuserimages-a.akamaihd.net.jpg")),
+        contentType: "image/jpg"
+    }
+    const image3 = {
+        data: fs.readFileSync(path.join(__dirname + "/../imageUploads/life_is_strange___chloe_s_thinking_time_by_katewindhelm-d8g3ycv.jpg")),
+        contentType: "image/jpg"
+    }
+    const images = [image, image1, image2, image3]
     const categories = await Category.find({}).select("_id").lean();
     let categoryIds = [];
     for (let i = 0; i < categories.length; i++) {
         categoryIds.push(categories[i]._id);
     }
     
-    for (let i = 0; i < 8000; i++) {
+    for (let i = 0; i < 12000; i++) {
         let post = {
             title: faker.name.title(),
             date: faker.date.past(1),
@@ -137,7 +150,7 @@ try {
             userId: faker.random.arrayElement(userIds),
             categoryId: faker.random.arrayElement(categoryIds),
             subCategory: undefined,
-            images: [image, image, image, image],
+            images: [faker.random.arrayElement(images), image, image, image],
             video: undefined,
             reward: faker.finance.amount(),
             contactNumber: "000-000-0000",

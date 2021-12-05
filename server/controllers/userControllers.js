@@ -39,8 +39,7 @@ const userController = {
                             .cookie("jwt", token, { 
                                 sameSite: "strict", 
                                 expires: expires, 
-                                httpOnly: true,
-                                secure: true
+                                httpOnly: true
                             }).cookie("loggedIn", true, {
                                 sameSite: "strict",
                                 expires: expires

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     LoadScript,
     GoogleMap,
@@ -11,13 +11,12 @@ function openPost(id) {
     // redirect to post
 }
 
-
 const Map = (props) => {
+
     const [lat, setLat] = useState(props.centerLat || 37.0902)
     const [lon, setLon] = useState(props.centerLon || -95.7129)
     const [isOpen, setIsOpen] = useState(false);
     const [postId, setPostId] = useState(null)
-
 
     function toggleInfoBox( latitude, longitude, id, open) {
         setIsOpen(open);
@@ -30,10 +29,10 @@ const Map = (props) => {
             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY}>
                 <GoogleMap
                     zoom={props.centerLat && props.centerLon ? 9 : 4}
-                    center={{ lat: lat, lng: lon }}
-                    mapContainerStyle={props.containerStyles}
+                    center={{ lat: lat, lng: lon}}
+                    mapContainerClassName={props.containerClassName}
                 >    
-                    { props.markers ?
+                    {props.markers ?
                         props.markers.map(mark => (
                             <Marker
                                 title={mark.title}
@@ -50,6 +49,7 @@ const Map = (props) => {
                                         onCloseClick={() => toggleInfoBox(null, null, null, false)}>
                                         <div>
                                             <h4>{mark.title}</h4>
+                                            <p>{mark.summary}</p>
                                             <button type="button" onClick={() => openPost(postId)} >
                                                 Go to Post
                                             </button>
@@ -57,7 +57,14 @@ const Map = (props) => {
                                     </InfoWindow>
                                 ) : null}
                             </Marker>
-                        )) : < > </>}
+                        )) : props.marker ? (
+                            <Marker
+                                title={props.marker.title}
+                                position={{ lat: props.marker.lat, lng: props.marker.lon }}
+                                draggable={true}
+                                onDragEnd={(e) => props.onChange(e.latLng)}> 
+                            </Marker>
+                        ) : < > </>}
                     
                 </GoogleMap>
             </LoadScript>

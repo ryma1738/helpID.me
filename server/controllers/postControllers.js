@@ -96,10 +96,11 @@ const postControllers = {
                         lon: postData.location.coordinates[0],
                         _id: postData._id,
                         title: postData.title,
+                        summary: postData.summary
                     })
                 }
                 
-                res.status(200).json({data: compiledPostData, pageData: {
+                res.status(200).json({posts: compiledPostData, pageData: {
                     totalDocs: postDataObject.length,
                     limit: limit,
                     totalPages: totalPages,
@@ -153,6 +154,7 @@ const postControllers = {
                         lon: postData.location.coordinates[0],
                         _id: postData._id,
                         title: postData.title,
+                        summary: postData.summary
                     })
                 }
                 delete results.docs;
@@ -307,6 +309,9 @@ const postControllers = {
         if (req.body.subCategory) {
             try {
                 const categoryData = await Category.findById(req.body.categoryId).lean()
+                if (!categoryData || Object.keys(categoryData).length === 0) {
+                    return res.status(400).json({errorMessage: "The category you selected was not found!"})
+                }
                 if (!categoryData.subCategories.includes(req.body.subCategory)) {
                     return res.status(400).json({ errorMessage: "The category you selected does not contain the sub category " + req.body.subCategory });
                 }
@@ -315,6 +320,14 @@ const postControllers = {
                     return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
                 }
                 return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
+            }
+        }
+        let video = undefined;
+        if (req.body.video) {
+            try {
+                video = req.body.video.replace("watch?v=", "embed/");
+            } catch(err) {
+                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             }
         }
         if (req.files.length > 0) {
@@ -334,7 +347,7 @@ const postControllers = {
             categoryId: req.body.categoryId,
             subCategory: req.body.subCategory || undefined,
             images: images,
-            video: req.body.video || undefined,
+            video: video,
             contactNumber: req.body.contactNumber || "000-000-0000",
             location: {coordinates: [req.body.lon, req.body.lat]}
         }],

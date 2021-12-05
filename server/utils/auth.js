@@ -12,7 +12,7 @@ module.exports = {
     },
     verifyToken(req, res, next) {
         let token = req.cookies.jwt || undefined;
-
+        
         if (token) {
 
             try {
