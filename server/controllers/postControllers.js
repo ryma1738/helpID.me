@@ -1,7 +1,7 @@
 const { Post, Category, Tip } = require("../models");
 const fs = require('fs');
 const path = require('path');
-const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages } = require('../utils/helpers')
+const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages, format_date } = require('../utils/helpers')
 
 const postControllers = {
     getAllPosts(req, res) { // add sorting to getAllPosts
@@ -88,6 +88,7 @@ const postControllers = {
                 for (let i = startingIndex; i < endingIndex; i++) {
                     let postData = postDataObject[i].toJSON();
                     postData.images = encodeImage(postData);
+                    postData.date = format_date(postData.date);
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
@@ -146,6 +147,7 @@ const postControllers = {
                 for (let i = 0; i < results.docs.length; i++) {
                     let postData = results.docs[i].toJSON();
                     postData.images = encodeImage(postData);
+                    postData.date = format_date(postData.date);
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
@@ -179,6 +181,7 @@ const postControllers = {
                 }
                 let postData = postDataObject.toJSON();
                 postData.images = encodeImages(postDataObject);
+                postData.date = format_date(postData.date);
                 delete postData.userId._id;
                 delete postData.userId.id;
                 for (let i = 0; i < postData.tips.length; i++) {
@@ -246,6 +249,7 @@ const postControllers = {
                 for (let i = 0; i < postDataObject.length; i++) {
                     let postData = postDataObject[i].toJSON();
                     postData.images = encodeImage(postData);
+                    postData.date = format_date(postData.date);
                     delete postData.tips;
                     const expires = await postDataObject[i].expiresIn();
                     compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived(), expiresIn: expires });
@@ -271,6 +275,7 @@ const postControllers = {
                 const expires = await postDataObject.expiresIn();
                 let postData = postDataObject.toJSON();
                 postData.images = encodeImages(postDataObject);
+                postData.date = format_date(postData.date);
 
                 for (let i = 0; i < postData.tips.length; i++) {
                     if (postData.tips[i].image) {

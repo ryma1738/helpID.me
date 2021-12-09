@@ -5,6 +5,21 @@ export const renewLogin = () => {
     });
 }
 
+export const getCategories = async () => {
+    const response = await fetch('/api/category/', {
+        method: "GET"
+    })
+    const categories = await response.json();
+    return ( 
+    <>
+    <option value={undefined}>All</option>
+        {categories.map(category => (
+            <option value={category._id}>{category.category}</option>
+        ))}
+    </>)
+    
+}
+
 export const checkNotifications = () => {
     return fetch('/api/notification/', {
         method: "GET"

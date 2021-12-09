@@ -1,5 +1,6 @@
 :root {
-  --main-color: #E6E6E6;
+  --main-color: #e6e6e6;
+  --nav-color: #e6e6e6e5;
   --jet: #343434;
   --cyan: #3CB3E4;
   --black: #001111;
@@ -16,6 +17,7 @@ body {
 .navMain {
   max-height: 200px;
   border-bottom: 5px solid var(--cyan);
+  background-color: var(--nav-color);
 }
 
 .navList {
@@ -41,6 +43,11 @@ body {
 }
 
 /* Main Styles */
+
+.searchCriteriaDiv {
+  border-right: 5px solid var(--cyan);
+}
+
 .sortRow {
   border-bottom: 5px solid var(--cyan);
 }
@@ -56,15 +63,28 @@ body {
 }
 
 .postCards {
-  box-shadow: 0px 1px 5px black;
-
+  box-shadow: 1px 1px 8px black;
+  height: 490px;
+  position: relative;
 }
 
-.postCards img,
-.postCards iframe {
-  max-height: 400px;
-  max-width: 100%;
-  
+.postCards:hover {
+  box-shadow: 1px 1px 20px var(--cyan);
+  cursor: pointer;
+}
+
+.postCardsImage {
+  float: left;
+  width:  100%;
+  height: 250px;
+  object-fit: cover;
+  padding: 0;
+}
+.postCardsImageDiv {
+  max-height: 250px;
+  background: radial-gradient(var(--main-color), gray);
+  margin: 0;
+
 }
 
 
@@ -75,23 +95,56 @@ body {
 /* --------------------------------------- */
 
 
-@media(max-width: 980px) {
+@media screen and (max-width: 1200px) { /* xl */
 
 }
 
-@media(max-width: 768px) {
-.navbarLogo {
-  content: url('./assets/images/NavbarLogo-Mobile.png');
+@media screen and (max-width: 992px) { /* lg */
+  .postCardsImage {
+    height: 350px;
+  }
+  .postCardsImageDiv {
+    max-height: 350px;
+  }
+  .postCards {
+    height: 590px;
+  }
 }
 
-.mainMap {
-  width: 100%;
-}
+@media screen and (max-width: 768px) { /* md */
+  .navbarLogo {
+    content: url('./assets/images/NavbarLogo-Mobile.png');
+  }
+
+  .mainMap {
+    width: 100%;
+  }
+  .searchCriteriaDiv {
+    border-bottom: 5px solid var(--cyan);
+    border-right: none;
+  }
 
 }
 
-@media(max-width: 575px) {
+@media screen and (max-width: 576px) { /* sm */
+  .postCardsImage {
+    max-height: 250px;
+  }
+  .postCardsImageDiv {
+    max-height: 250px;
+  }
+}
 
+@media screen and (min-width: 1600px) { /* xxl */
+  .postCardsImage {
+    height: 300px;
+  }
+  .postCardsImageDiv {
+    max-height: 300px;
+  }
+  .postCards {
+    height: 550px;
+  }
 }
 
 /* ----- End Media Queries ----- */

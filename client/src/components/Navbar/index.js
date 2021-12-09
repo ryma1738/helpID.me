@@ -69,7 +69,7 @@ const Navigator = (props) => {
     }, [])
     
     return (
-        <Container fluid className="navMain">
+        <Container fluid className="navMain sticky-top">
         <Container fluid="xxl">
             <Row>
                 <Col lg={5} md={6} sm={8} xs={10}>
