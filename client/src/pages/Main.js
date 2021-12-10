@@ -171,7 +171,7 @@ const Main = (props) => {
                             </svg>
                         </Row>
                         <Row>
-                            <p className="text-center fs-1 mt-4">No Posts Found!</p>
+                            <p className="text-center fs-1 mt-4">No Listings Found!</p>
                         </Row>
                     </Container>
                     
@@ -298,26 +298,35 @@ const Main = (props) => {
                     <Row>
                         <Col lg={3} md={4} xs={12} className="searchCriteriaDiv">
                             {/* Search Criteria */}
-                            <p> Search by Category:</p>
-                            <select value={categoryId} className="p-1" onChange={(e) => {
-                                setCategoryId(e.target.value);
-                                setSubCategories(undefined);
-                                loadSubCategories(e.target[e.target.selectedIndex].innerText);
-                                load(false, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value, undefined);
-                            }} style={{maxWidth: "100%"}} >
-                                {categories}
-                            </select>
+                            <Row className="my-1">
+                                <Col md={12} xs={6} className="mt-1">
+                                    <p className="mb-1"> Search by Category:</p>
+                                    <select value={categoryId} className="p-1" onChange={(e) => {
+                                        setCategoryId(e.target.value);
+                                        setSubCategories(undefined);
+                                        loadSubCategories(e.target[e.target.selectedIndex].innerText);
+                                        load(false, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value, undefined);
+                                    }} style={{ maxWidth: "100%" }} >
+                                        {categories}
+                                    </select>
+                                </Col>
 
-                            {subCategories ? (<div className="mt-2">
-                                <p>SubCategories: </p>
-                                <select value={subCategory} className="p-1" onChange={(e) =>  {
-                                    setSubCategory(e.target.value);
-                                    load(false, undefined, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value);
-                                }} >
-                                    <option value="" >All</option>
-                                    {subCategories}
-                                </select>
-                            </div>) : (<></>)}
+                                {subCategories ? (<Col md={12} xs={6} className="mt-1">
+                                    <p className="mb-1">Sub-categories: </p>
+                                    <select value={subCategory} className="p-1" onChange={(e) => {
+                                        setSubCategory(e.target.value);
+                                        load(false, undefined, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value);
+                                    }} >
+                                        <option value="" >All</option>
+                                        {subCategories}
+                                    </select>
+                                </Col>) : (<></>)}
+                            </Row>
+                            <Row className="mx-0 mb-1" onBlur={() => ""}>
+                                <p className="mb-1 p-0"> Enter location / Address:</p>
+                                <input type="text" style={{ maxWidth: "100%"}}></input>
+                            </Row>
+                            
                         </Col>
                         <Col lg={9} md={8} xs={12}>
                             <Row style={{ minHeight: "60vh" }}>

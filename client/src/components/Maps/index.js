@@ -24,9 +24,9 @@ const Map = (props) => {
         setLat(latitude || lat);
         setLon(longitude || lon);
     }
-
+                //removed the y in key to stop using google maps api (paid for version)
         return (
-            <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY}>
+             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KE}>
                 <GoogleMap
                     zoom={props.centerLat && props.centerLon ? 9 : 4}
                     center={{ lat: lat, lng: lon}}
