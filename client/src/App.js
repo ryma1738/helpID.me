@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './style.css';
 import { Routes, Route, BrowserRouter, } from 'react-router-dom';
-import { renewLogin, getAllPosts } from './utils/api';
+import { renewLogin } from './utils/api';
 import Navigator from "./components/Navbar";
 import Footer from "./components/Footer";
 import Main from "./pages/Main";

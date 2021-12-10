@@ -12,7 +12,7 @@ export const getCategories = async () => {
     const categories = await response.json();
     return ( 
     <>
-    <option value={undefined}>All</option>
+    <option value="">All</option>
         {categories.map(category => (
             <option value={category._id}>{category.category}</option>
         ))}

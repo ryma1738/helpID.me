@@ -14,15 +14,114 @@ function loading(width, height) {
     )
 }
 
+function getSubCategories(categoryName) {
+    switch (categoryName) {
+        case "Assault/Threats":
+            return (<>
+                <option value="Assault/Threats" >Assault/Threats</option>
+                <option value="Aggravated Assault" >Aggravated Assault</option>
+            </>);
+        case "Arson":
+            return (<>
+                <option value="Business" >Business</option>
+                <option value="Private Property" >Private Property</option>
+                <option value="Public Property" >Public Property</option>
+            </>);
+
+        case "Burglary":
+            return (<>
+                <option value="Business" >Business</option>
+                <option value="Private Property" >Private Property</option>
+            </>);
+
+        case "Damaged Property":
+            return (<>
+                <option value="Private Vehicle" >Private Vehicle</option>
+                <option value="Graffiti" >Graffiti</option>
+                <option value="Business" >Business</option>
+                <option value="Private Property" >Private Property</option>
+                <option value="Public Property" >Public Property</option>
+            </>);
+
+        case "Kidnapping":
+            return (<>
+                <option value="Minor" >Minor</option>
+                <option value="Adult" >Adult</option>
+                <option value="Custody Dispute" >Custody Dispute</option>
+                <option value="Custodial Interference" >Custodial Interference</option>
+            </>);
+
+        case "Larceny/Theft":
+            return (<>
+                <option value="Failure to Pay" >Failure to Pay</option>
+                <option value="Pickpocket" >Pickpocket</option>
+                <option value="Porch Theft" >Porch Theft</option>
+                <option value="Purse Snatch" >Purse Snatch</option>
+                <option value="Shoplift / Retail Theft" >Shoplift / Retail Theft</option>
+                <option value="Striping a Vehicle for Parts" >Striping a Vehicle for Parts</option>
+                <option value="Theft from Private Yards" >Theft from Private Yards</option>
+            </>);
+
+        case "Morals":
+            return (<>
+                <option value="Obscene Conduct/Lewdness" >Obscene Conduct/Lewdness</option>
+            </>);
+
+        case "Public Order":
+            return (<>
+                <option value="Riot" >Riot</option>
+                <option value="Unlawful Assembly" >Unlawful Assembly</option>
+            </>);
+
+        case "Robbery":
+            return (<>
+                <option value="Bank/Financial Institution" >Bank/Financial Institution</option>
+                <option value="Business" >Business</option>
+                <option value="Street" >Street</option>
+                <option value="Residential" >Residential</option>
+            </>);
+
+        case "Sexual Offenses/Rape":
+            return (<>
+                <option value="Adult" >Adult</option>
+                <option value="Juvenile" >Juvenile</option>
+            </>);
+
+        case "Suspicious Activity":
+            return (<>
+                <option value="Suspicious Packages" >Suspicious Packages</option>
+            </>);
+
+        case "Traffic Offenses":
+            return (<>
+                <option value="Hit and Run" >Hit and Run</option>
+                <option value="Fleeing" >Fleeing</option>
+                <option value="Possible DUI/DWI" >Possible DUI/DWI</option>
+            </>);
+
+        case "Weapons Offenses":
+            return (<>
+                <option value="Brandishing Weapon" >Brandishing Weapon</option>
+                <option value="Drive-by Shooting" >Drive-by Shooting</option>
+                <option value="Unlawful Discharge of Firearm" >Unlawful Discharge of Firearm"</option>
+            </>);
+
+        default:
+            return undefined;
+    }
+
+}
+
 
 const Main = (props) => {
-    const [categories, setCategories] = useState(() => null)
+    const [categories, setCategories] = useState(() => null);
+    const [subCategories, setSubCategories] = useState(() => undefined);
     const [sort, setSort] = useState(() => "");
     const [markers, setMarkers] = useState(() => null);
     const [posts, setPosts] = useState(() => loading(100, 100));
     const [limit, setLimit] = useState(() => 20);
     const [center, setCenter] = useState(() => [undefined, undefined]);
-    const [maxDistance, setMaxDistance] = useState(() => 200);
+    const [maxDistance, setMaxDistance] = useState(() => 100);
     const [categoryId, setCategoryId] = useState(() => undefined);
     const [subCategory, setSubCategory] = useState(() => undefined);
     const [mainMap, setMainMap] = useState(() => loading(75,75));
@@ -38,16 +137,48 @@ const Main = (props) => {
         console.log(id)
     }
 
-    async function load(initial, latitude, longitude, totalItems, sortBy, itemLimit) {
+    function loadSubCategories(categoryName) {
+        let element = getSubCategories(categoryName);
+        setSubCategory("");
+        if (!element) {
+            setSubCategories(undefined);
+        } else {
+            setSubCategories(element);
+        }
+    }
+
+    async function load(initial, latitude, longitude, totalItems, sortBy, maxDistanceNum, pageNum, categoryIdNum, subCategoryName) {
         setPosts(loading(100, 100));
         const response = initial ? 
                         await getAllPosts(longitude, latitude, maxDistance, undefined, totalItems) : 
                         await getAllPosts(center[0], center[1], maxDistance, currentPage,
-                             itemLimit ? itemLimit : limit, sortBy ? sortBy : sort, categoryId, subCategory);;
+                            totalItems ? totalItems : limit,
+                            sortBy ? sortBy : sort,
+                            categoryIdNum || categoryIdNum === "" ? categoryIdNum : categoryId,
+                            subCategoryName || subCategoryName === "" ? subCategoryName : subCategory);
         if (!response.ok) {
             alert("Error loading posts, please try again.")
-            response.json().then(data => console.log(data))
+            response.json().then(data => console.log(data));
         } else {
+            if (response.status === 204) {
+                setPosts((
+                <div className="d-flex justify-content-center align-items-center" style={{minHeight: "60vh"}}>
+                    <Container fluid>
+                        <Row>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+                            </svg>
+                        </Row>
+                        <Row>
+                            <p className="text-center fs-1 mt-4">No Posts Found!</p>
+                        </Row>
+                    </Container>
+                    
+                </div>))
+                setMarkers([])
+                return;
+            }
             const postData = await response.json();
             setPosts(postData.posts.map(post => {
                 return (
@@ -92,14 +223,12 @@ const Main = (props) => {
     }
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const categories = await getCategories();
-            setCategories(categories);
+        navigator.geolocation.getCurrentPosition((pos) => {
+            getCategories().then(categories => setCategories(categories));
             initialLoad(pos.coords.latitude, pos.coords.longitude, 20);
-        }, async (err) => {
+        }, (err) => {
             if (err.code === err.PERMISSION_DENIED) {
-                const categories = await getCategories();
-                setCategories(categories);
+                getCategories().then(categories => setCategories(categories));
                 initialLoad(undefined, undefined, 50);
                 setSort(() => "Most Recent")
                 setLimit(() => 50);
@@ -122,6 +251,9 @@ const Main = (props) => {
     useEffect(() => {
 
     }, [posts])
+    useEffect(() => {
+
+    }, [subCategories])
 
     return (
         <Container fluid className="" style={{minHeight: "80vh"}}>
@@ -138,7 +270,7 @@ const Main = (props) => {
                             <p className="my-auto pe-2">Items per Page:</p>
                             <select className="p-1" value={limit} onChange={(e) => {
                                 setLimit(e.target.value);
-                                load(false, undefined, undefined, undefined, undefined, e.target.value);
+                                load(false, undefined, undefined, e.target.value);
                             }}>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>
@@ -151,9 +283,9 @@ const Main = (props) => {
                            <p className="my-auto pe-2">Sort by:</p>
                             <select className="p-1" onChange={(e) => {
                                 setSort(e.target.value);
-                                load(false, undefined, undefined, undefined, e.target.value, undefined);
+                                load(false, undefined, undefined, undefined, e.target.value);
                             }} value={sort}>
-                                <option value="">Nearest To Location</option>
+                                {center[0] && center[1] ? <option value="" >Nearest To Location</option> : <></>}
                                 <option value="Most Recent">Most Recent</option>
                                 <option value="Most Recent Inv">Most Recent (oldest to newest)</option>
                                 <option value="Popular">Popular</option>
@@ -167,12 +299,28 @@ const Main = (props) => {
                         <Col lg={3} md={4} xs={12} className="searchCriteriaDiv">
                             {/* Search Criteria */}
                             <p> Search by Category:</p>
-                            <select value={categoryId} className="p-1" onChange={(e) => setCategoryId(e.value)}  >
+                            <select value={categoryId} className="p-1" onChange={(e) => {
+                                setCategoryId(e.target.value);
+                                setSubCategories(undefined);
+                                loadSubCategories(e.target[e.target.selectedIndex].innerText);
+                                load(false, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value, undefined);
+                            }} style={{maxWidth: "100%"}} >
                                 {categories}
                             </select>
+
+                            {subCategories ? (<div className="mt-2">
+                                <p>SubCategories: </p>
+                                <select value={subCategory} className="p-1" onChange={(e) =>  {
+                                    setSubCategory(e.target.value);
+                                    load(false, undefined, undefined, undefined, undefined, undefined, undefined, undefined, e.target.value);
+                                }} >
+                                    <option value="" >All</option>
+                                    {subCategories}
+                                </select>
+                            </div>) : (<></>)}
                         </Col>
                         <Col lg={9} md={8} xs={12}>
-                            <Row>
+                            <Row style={{ minHeight: "60vh" }}>
                                 {posts}
                             </Row>
                         </Col>

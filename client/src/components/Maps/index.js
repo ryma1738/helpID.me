@@ -64,7 +64,7 @@ const Map = (props) => {
                                 draggable={true}
                                 onDragEnd={(e) => props.onChange(e.latLng)}> 
                             </Marker>
-                        ) : < > </>}
+                        ) : null}
                     
                 </GoogleMap>
             </LoadScript>
