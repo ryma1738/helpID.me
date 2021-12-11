@@ -1,7 +1,7 @@
 import React, { useState, useEffect, } from 'react';
 import { Col, Container, Row, Spinner } from "react-bootstrap";
 import Maps from '../components/Maps';
-import { getAllPosts, getCategories } from '../utils/api';
+import { getAllPosts, getCategories, getZipCoords } from '../utils/api';
 import {LazyLoadImage} from "react-lazy-load-image-component";
 
 function loading(width, height) {
@@ -126,6 +126,7 @@ const Main = (props) => {
     const [subCategory, setSubCategory] = useState(() => undefined);
     const [mainMap, setMainMap] = useState(() => loading(75,75));
     const [currentPage, setCurrentPage] = useState(() => 1);
+    const [zipError, setZipError] = useState(() => "");
 
     function initialLoad(latitude, longitude, totalItems) {
         setLimit(totalItems);
@@ -146,12 +147,26 @@ const Main = (props) => {
             setSubCategories(element);
         }
     }
+    
+    function loadZipCoords(zip) {
+        console.log(zip)
+        getZipCoords(zip).then(response => response.json()).then(zipCoords => {
+            setCenter([zipCoords.coords.lon, zipCoords.coords.lat]);
+            load(false, zipCoords.coords.lat, zipCoords.coords.lon);
+        }).catch(err => {
+            console.log(err)
+        });
+    }
 
     async function load(initial, latitude, longitude, totalItems, sortBy, maxDistanceNum, pageNum, categoryIdNum, subCategoryName) {
         setPosts(loading(100, 100));
         const response = initial ? 
                         await getAllPosts(longitude, latitude, maxDistance, undefined, totalItems) : 
-                        await getAllPosts(center[0], center[1], maxDistance, currentPage,
+                        await getAllPosts(
+                            longitude ? longitude : center[0], 
+                            latitude ? latitude : center[1], 
+                            maxDistanceNum ? maxDistanceNum : maxDistance, 
+                            pageNum? pageNum : currentPage,
                             totalItems ? totalItems : limit,
                             sortBy ? sortBy : sort,
                             categoryIdNum || categoryIdNum === "" ? categoryIdNum : categoryId,
@@ -165,7 +180,7 @@ const Main = (props) => {
                 <div className="d-flex justify-content-center align-items-center" style={{minHeight: "60vh"}}>
                     <Container fluid>
                         <Row>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
                                 <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
                             </svg>
@@ -322,9 +337,25 @@ const Main = (props) => {
                                     </select>
                                 </Col>) : (<></>)}
                             </Row>
-                            <Row className="mx-0 mb-1" onBlur={() => ""}>
-                                <p className="mb-1 p-0"> Enter location / Address:</p>
-                                <input type="text" style={{ maxWidth: "100%"}}></input>
+                            <Row className="mb-1">
+                                <Col md={12} xs={6} className="mt-1">
+                                    <p className="mb-1 p-0"> Search by Zip Code:</p>
+                                    <input type="text" style={{ width: "100%" }} onBlur={(e) => loadZipCoords(e.target.value)}></input>
+                                    <p className="mb-1 p-0 text-danger">{zipError}</p>
+                                </Col>
+                                <Col md={12} xs={6} className="mt-1">
+                                    <p className="mb-1 p-0">Search Radius</p>
+                                    <select value={maxDistance} className="p-1" onChange={(e) => {
+                                        setMaxDistance(e.target.value);
+                                        load(false, undefined, undefined, undefined, undefined, e.target.value);
+                                    }}>
+                                    <option value={5} >5 Miles</option>
+                                    <option value={10}>10 Miles</option>
+                                    <option value={25}>25 Miles</option>
+                                    <option value={50}>50 Miles</option>
+                                    <option value={100}>100 Miles</option>
+                                    </select>
+                                </Col>
                             </Row>
                             
                         </Col>

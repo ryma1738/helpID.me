@@ -8,7 +8,7 @@ export const renewLogin = () => {
 export const getCategories = async () => {
     const response = await fetch('/api/category/', {
         method: "GET"
-    })
+    });
     const categories = await response.json();
     return ( 
     <>
@@ -17,7 +17,12 @@ export const getCategories = async () => {
             <option value={category._id}>{category.category}</option>
         ))}
     </>)
-    
+}
+
+export const getZipCoords = (zipCode) => {
+    return fetch('/api/post/zip/' + zipCode, {
+        method: "GET"
+    });
 }
 
 export const checkNotifications = () => {

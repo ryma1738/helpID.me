@@ -29,7 +29,7 @@ const Map = (props) => {
              <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY}>
                 <GoogleMap
                     zoom={props.centerLat && props.centerLon ? 9 : 4}
-                    center={{ lat: lat, lng: lon}}
+                    center={{ lat: props.centerLat ? props.centerLat : lat, lng: props.centerLon ? props.centerLon : lon}}
                     mapContainerClassName={props.containerClassName}
                 >    
                     {props.markers ?
