@@ -2,6 +2,7 @@ const { Post, Category, Tip } = require("../models");
 const fs = require('fs');
 const path = require('path');
 const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages, format_date } = require('../utils/helpers')
+const zipCodes = require("../utils/zipCodes.json");
 
 const postControllers = {
     getAllPosts(req, res) { // add sorting to getAllPosts
@@ -542,6 +543,15 @@ const postControllers = {
                     res.status(400).json({ errorMessage: "You can only renew a post if it's at least 60 days old" })
                 }
             }).catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
+    },
+    getZipCode(req, res) {
+        const zip = req.params.zipCode.toString();
+        const latLon = zipCodes.zips[zip];
+        if (latLon) {
+            res.status(200).json({coords: latLon});
+        } else {
+            res.status(400).json({ errorMessage: "Zip code not found!"});
+        }
     },
     featurePost(req, res) {
         // this will be used to allow a user to feature their posts. They will need to pay for it though.

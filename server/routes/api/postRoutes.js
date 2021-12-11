@@ -7,7 +7,8 @@ const {
     getUserPost,
     createPost,
     editPost,
-    deletePost
+    deletePost,
+    getZipCode
 } = require('../../controllers/postControllers');
 
 // Set up image Uploading
@@ -87,6 +88,7 @@ router.route('/user/:id')
             editPost(req, res);
         });
     }) // ✓ - may need more testing be seems to be working
-
+router.route("/zip/:zipCode")
+    .get(getZipCode)
 
 module.exports = router;
