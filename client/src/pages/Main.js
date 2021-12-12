@@ -1,5 +1,5 @@
 import React, { useState, useEffect, } from 'react';
-import { Col, Container, Row, Spinner } from "react-bootstrap";
+import { Col, Container, Row, Spinner, Pagination } from "react-bootstrap";
 import Maps from '../components/Maps';
 import { getAllPosts, getCategories, getZipCoords } from '../utils/api';
 import {LazyLoadImage} from "react-lazy-load-image-component";
@@ -121,11 +121,11 @@ const Main = (props) => {
     const [posts, setPosts] = useState(() => loading(100, 100));
     const [limit, setLimit] = useState(() => 20);
     const [center, setCenter] = useState(() => [undefined, undefined]);
-    const [maxDistance, setMaxDistance] = useState(() => 100);
+    const [maxDistance, setMaxDistance] = useState(() => 50);
     const [categoryId, setCategoryId] = useState(() => undefined);
     const [subCategory, setSubCategory] = useState(() => undefined);
     const [mainMap, setMainMap] = useState(() => loading(75,75));
-    const [currentPage, setCurrentPage] = useState(() => 1);
+    const [pageInfo, setPageInfo] =useState(() => null);
     const [zipError, setZipError] = useState(() => "");
 
     function initialLoad(latitude, longitude, totalItems) {
@@ -149,13 +149,46 @@ const Main = (props) => {
     }
     
     function loadZipCoords(zip) {
-        console.log(zip)
-        getZipCoords(zip).then(response => response.json()).then(zipCoords => {
-            setCenter([zipCoords.coords.lon, zipCoords.coords.lat]);
-            load(false, zipCoords.coords.lat, zipCoords.coords.lon);
-        }).catch(err => {
-            console.log(err)
-        });
+        if (zip) {
+            getZipCoords(zip).then(response => response.json()).then(zipCoords => {
+                if (center[0] === zipCoords.coords.lon) {
+                    setZipError("");
+                    return;
+                } else {
+                    setZipError("");
+                    setCenter([zipCoords.coords.lon, zipCoords.coords.lat]);
+                    load(false, zipCoords.coords.lat, zipCoords.coords.lon);
+                }
+            }).catch(err => {
+                console.log(err)
+                setZipError("Zip code invalid");
+            });
+        } else {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                console.log(center[0] === pos.coords.longitude)
+                if (center[0] === pos.coords.longitude) {
+                    return;
+                } else {
+                    setCenter([pos.coords.longitude, pos.coords.latitude]);
+                    load(false, pos.coords.latitude, pos.coords.longitude);
+                }
+            }, (err) => {
+                if (err.code === err.PERMISSION_DENIED) {
+                    if (center[0] === undefined) {
+                        return;
+                    } else {
+                        setCenter([undefined, undefined]);
+                        if (sort === "") {
+                            setSort("Most Recent");
+                            load(false, "", "", undefined, "Most Recent");
+                        } else {
+                            load(false, "", "");
+                        }  
+                    }
+                }
+            })
+            setZipError("");
+        } 
     }
 
     async function load(initial, latitude, longitude, totalItems, sortBy, maxDistanceNum, pageNum, categoryIdNum, subCategoryName) {
@@ -163,10 +196,10 @@ const Main = (props) => {
         const response = initial ? 
                         await getAllPosts(longitude, latitude, maxDistance, undefined, totalItems) : 
                         await getAllPosts(
-                            longitude ? longitude : center[0], 
-                            latitude ? latitude : center[1], 
+                            longitude || longitude === "" ? longitude : center[0], 
+                            latitude || latitude === "" ? latitude : center[1], 
                             maxDistanceNum ? maxDistanceNum : maxDistance, 
-                            pageNum? pageNum : currentPage,
+                            pageNum? pageNum : pageInfo.page,
                             totalItems ? totalItems : limit,
                             sortBy ? sortBy : sort,
                             categoryIdNum || categoryIdNum === "" ? categoryIdNum : categoryId,
@@ -191,6 +224,7 @@ const Main = (props) => {
                     </Container>
                     
                 </div>))
+                setPageInfo(null)
                 setMarkers([])
                 return;
             }
@@ -233,7 +267,55 @@ const Main = (props) => {
                     </Col>
                 )
             }));
+            setPageInfo(postData.pageData);
             setMarkers(postData.markers);
+        }
+    }
+
+    function paginate() {
+        if (pageInfo) {
+            let pageItems = []
+            if (pageInfo.totalPages <= 3) {
+                for (let i = 0; i < pageInfo.totalPages; i++) {
+                    pageItems.push(<Pagination.Item active={pageInfo.page === (i + 1)}
+                        onClick={() => pageInfo.page === (i + 1) ? null : load(false, undefined, undefined, undefined, undefined, undefined, i + 1)}>{i + 1}</Pagination.Item>)
+                }
+                return (<>
+                    <Pagination.Prev onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page - 1)}
+                    disabled={pageInfo ? pageInfo.hasPrevPage ? false : true : true} />
+                        {pageItems}
+                    <Pagination.Next onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page + 1)} 
+                    disabled={pageInfo ? pageInfo.hasNextPage ? false : true : true} />
+                </>)
+            } else {
+                return (<>
+                    <Pagination.First onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, 1)}
+                        disabled={pageInfo ? pageInfo.hasPrevPage ? false : true : true}/>
+                    <Pagination.Prev onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page - 1)}
+                        disabled={pageInfo ? pageInfo.hasPrevPage ? false : true : true} />
+                        <Pagination.Item active={pageInfo.page === 1}
+                            onClick={() => pageInfo.page === 1 ? null : pageInfo.page === pageInfo.totalPages ? 
+                                load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page - 2) :
+                                load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page - 1)}>
+                                {pageInfo.page === 1 ? 1 : pageInfo.page === pageInfo.totalPages ? pageInfo.totalPages -2 : pageInfo.page - 1}
+                        </Pagination.Item>
+                        <Pagination.Item active={pageInfo.page != pageInfo.totalPages && pageInfo.page !== 1}
+                            onClick={() => pageInfo.page === 1 ? load(false, undefined, undefined, undefined, undefined, undefined, 2) :
+                                pageInfo.page === pageInfo.totalPages ? load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.totalPages - 1) : null}>
+                                {pageInfo.page === 1 ? 2 : pageInfo.page === pageInfo.totalPages ? pageInfo.totalPages -1 : pageInfo.page}
+                        </Pagination.Item>
+                        <Pagination.Item active={pageInfo.page === pageInfo.totalPages}
+                        onClick={() => pageInfo.page === pageInfo.totalPages ? null : pageInfo.page === 1 ?
+                            load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page + 2) :
+                            load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page + 1) }>
+                            {pageInfo.page === 1 ? 3 : pageInfo.page === pageInfo.totalPages ? pageInfo.totalPages : pageInfo.page + 1}
+                        </Pagination.Item>
+                    <Pagination.Next onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.page + 1)} 
+                        disabled={pageInfo ? pageInfo.hasNextPage ? false : true : true} />
+                    <Pagination.Last disabled={pageInfo ? pageInfo.hasNextPage ? false : true : true}
+                        onClick={() => load(false, undefined, undefined, undefined, undefined, undefined, pageInfo.totalPages)}/>
+                </>)
+            }
         }
     }
 
@@ -340,7 +422,7 @@ const Main = (props) => {
                             <Row className="mb-1">
                                 <Col md={12} xs={6} className="mt-1">
                                     <p className="mb-1 p-0"> Search by Zip Code:</p>
-                                    <input type="text" style={{ width: "100%" }} onBlur={(e) => loadZipCoords(e.target.value)}></input>
+                                    <input type="search" style={{ width: "100%" }} maxlength="5" onBlur={(e) => loadZipCoords(e.target.value)}></input>
                                     <p className="mb-1 p-0 text-danger">{zipError}</p>
                                 </Col>
                                 <Col md={12} xs={6} className="mt-1">
@@ -357,11 +439,26 @@ const Main = (props) => {
                                     </select>
                                 </Col>
                             </Row>
+                            <Row>
+                                <Col xs={12}>
+                                    {pageInfo ? (
+                                        <p>Total Listings: {pageInfo.totalDocs}</p>
+                                    ) : null}
+                                </Col>
+                            </Row>
+                            <Row>
+                                {/* Ad Space */}
+                            </Row>
                             
                         </Col>
                         <Col lg={9} md={8} xs={12}>
                             <Row style={{ minHeight: "60vh" }}>
                                 {posts}
+                            </Row>
+                            <Row >
+                                <Pagination className="d-flex justify-content-center">
+                                    {paginate()}  
+                                </Pagination>
                             </Row>
                         </Col>
                     </Row>

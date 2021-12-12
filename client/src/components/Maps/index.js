@@ -5,7 +5,8 @@ import {
     Marker,
     InfoWindow
 } from "@react-google-maps/api";
-import markerImage from "../../assets/images/MapPin.png"
+import markerImage from "../../assets/images/MapPin.png";
+import { Spinner, } from "react-bootstrap";
 
 function openPost(id) {
     // redirect to post
@@ -26,9 +27,15 @@ const Map = (props) => {
     }
                 //removed the y in key to stop using google maps api (paid for version)
         return (
-             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY}>
+            <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY} loadingElement={(
+                <div className="d-flex justify-content-center">
+                    <Spinner animation="border" role="status" style={{ width: "75px", height: "75px", marginTop: "10vh" }}>
+                        <span className="visually-hidden">Loading...</span>
+                    </Spinner>
+                </div>
+            )}>
                 <GoogleMap
-                    zoom={props.centerLat && props.centerLon ? 9 : 4}
+                    zoom={props.centerLat === 37.0902 && props.centerLon === -95.7129 ? 4 : props.centerLat? 9 : 4}
                     center={{ lat: props.centerLat ? props.centerLat : lat, lng: props.centerLon ? props.centerLon : lon}}
                     mapContainerClassName={props.containerClassName}
                 >    
