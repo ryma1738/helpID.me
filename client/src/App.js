@@ -9,9 +9,6 @@ import Main from "./pages/Main";
 function App() {
 
   const [loggedIn, setLoggedIn] = useState(false);
-  let center = [];
-  let markers = [];
-  let data;
 
   useEffect(() => {
     // credit: https://stackoverflow.com/questions/65049812/how-to-call-a-function-every-minute-in-a-react-component/65049865

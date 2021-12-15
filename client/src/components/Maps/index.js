@@ -18,13 +18,19 @@ const Map = (props) => {
     const [lon, setLon] = useState(props.centerLon || -95.7129)
     const [isOpen, setIsOpen] = useState(false);
     const [postId, setPostId] = useState(null)
+    const [initial, setInitial] = useState(true);
 
-    function toggleInfoBox( latitude, longitude, id, open) {
+    function toggleInfoBox(latitude, longitude, id, open) {
         setIsOpen(open);
         setPostId(id);
-        setLat(latitude || lat);
-        setLon(longitude || lon);
+        setInitial(false);
+        if (latitude && longitude) {
+            setLat(latitude);
+            setLon(longitude);
+        }
     }
+
+    useEffect(() => setInitial(true), [props.centerLat, props.centerLon])
                 //removed the y in key to stop using google maps api (paid for version)
         return (
             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY} loadingElement={(
@@ -36,7 +42,8 @@ const Map = (props) => {
             )}>
                 <GoogleMap
                     zoom={props.centerLat === 37.0902 && props.centerLon === -95.7129 ? 4 : props.centerLat? 9 : 4}
-                    center={{ lat: props.centerLat ? props.centerLat : lat, lng: props.centerLon ? props.centerLon : lon}}
+                    center={initial ? { lat: props.centerLat ? props.centerLat : lat, lng: props.centerLon ? props.centerLon : lon}
+                                    : { lat: lat, lng: lon}}
                     mapContainerClassName={props.containerClassName}
                 >    
                     {props.markers ?

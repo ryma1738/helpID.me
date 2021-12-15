@@ -199,7 +199,7 @@ const Main = (props) => {
                             longitude || longitude === "" ? longitude : center[0], 
                             latitude || latitude === "" ? latitude : center[1], 
                             maxDistanceNum ? maxDistanceNum : maxDistance, 
-                            pageNum? pageNum : pageInfo.page,
+                            pageNum ? pageNum : pageInfo ? pageInfo.page : 1,
                             totalItems ? totalItems : limit,
                             sortBy ? sortBy : sort,
                             categoryIdNum || categoryIdNum === "" ? categoryIdNum : categoryId,
@@ -210,7 +210,7 @@ const Main = (props) => {
         } else {
             if (response.status === 204) {
                 setPosts((
-                <div className="d-flex justify-content-center align-items-center" style={{minHeight: "60vh"}}>
+                <div className="d-flex justify-content-center align-items-center" key="None Found" style={{minHeight: "60vh"}}>
                     <Container fluid>
                         <Row>
                             <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" viewBox="0 0 16 16">
@@ -422,7 +422,7 @@ const Main = (props) => {
                             <Row className="mb-1">
                                 <Col md={12} xs={6} className="mt-1">
                                     <p className="mb-1 p-0"> Search by Zip Code:</p>
-                                    <input type="search" style={{ width: "100%" }} maxlength="5" onBlur={(e) => loadZipCoords(e.target.value)}></input>
+                                    <input type="search" style={{ width: "100%" }} maxLength="5" onBlur={(e) => loadZipCoords(e.target.value)}></input>
                                     <p className="mb-1 p-0 text-danger">{zipError}</p>
                                 </Col>
                                 <Col md={12} xs={6} className="mt-1">
