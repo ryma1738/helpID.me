@@ -24,8 +24,8 @@ const userController = {
         })
             .select('-__v')
             .then(async (userData) => {
-                if (Object.keys(userData).length === 0) {
-                    res.status(404).json({ errorMessage: 'No user found with this email!' });
+                if (!userData || Object.keys(userData).length === 0) {
+                    res.status(400).json({ errorMessage: 'No user found with this email!' });
                     return;
                 } else {
                     const passwordValid = await userData.isCorrectPassword(req.body.password, userData.password);
@@ -44,7 +44,7 @@ const userController = {
                                 sameSite: "strict",
                                 expires: expires
                             }).json("User LoggedIn");
-                    } else res.status(400).json({ errorMessage: 'Incorrect password' });
+                    } else res.status(400).json({ errorMessage: 'Email or Password is incorrect!' });
                 }
             })
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))

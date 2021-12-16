@@ -64,7 +64,8 @@ const Map = (props) => {
                                         <div>
                                             <h4>{mark.title}</h4>
                                             <p>{mark.summary}</p>
-                                            <button type="button" onClick={() => openPost(postId)} >
+                                            <button type="button" className="button m-1"
+                                             onClick={() => openPost(postId)} style={{backgroundColor: "white"}}>
                                                 Go to Post
                                             </button>
                                         </div>

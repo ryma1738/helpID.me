@@ -3,6 +3,8 @@ import './style.css';
 import { Routes, Route, BrowserRouter, } from 'react-router-dom';
 import { renewLogin } from './utils/api';
 import Navigator from "./components/Navbar";
+import Login from "./pages/Login";
+import Signup from './pages/Signup';
 import Footer from "./components/Footer";
 import Main from "./pages/Main";
 
@@ -14,7 +16,13 @@ function App() {
     // credit: https://stackoverflow.com/questions/65049812/how-to-call-a-function-every-minute-in-a-react-component/65049865
     let cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)loggedIn\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     if (cookieValue) {
-      setLoggedIn(true)
+      renewLogin().then(response => {
+        if (response.ok) {
+          setLoggedIn(true)
+        } else {
+          setLoggedIn(false);
+        }
+      })
     }
     const interval = setInterval(async () => {
       const response = await renewLogin();
@@ -34,6 +42,8 @@ function App() {
       <Navigator loggedIn={loggedIn}/>
       <Routes>
         <Route exact path='/' element={<Main />} />
+        <Route exact path='/login' loggedIn={loggedIn} element={<Login />} />
+        <Route exact path='/signup' loggedIn={loggedIn} element={<Signup />} />
       </Routes>
       {/* <Footer /> */}
     </BrowserRouter>

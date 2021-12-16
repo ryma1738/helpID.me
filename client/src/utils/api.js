@@ -1,7 +1,10 @@
 
 export const renewLogin = () => {
     return fetch('/api/user/renew', {
-        method: "GET"
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
 }
 
@@ -21,19 +24,43 @@ export const getCategories = async () => {
 
 export const getZipCoords = (zipCode) => {
     return fetch('/api/post/zip/' + zipCode, {
-        method: "GET"
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
 }
 
 export const checkNotifications = () => {
     return fetch('/api/notification/', {
-        method: "GET"
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
 }
 
 export const getAllPosts = (lon = "", lat = "", maxDistance = "", page = 1, limit = "", sort = "Most Recent", categoryId = "", subCategory = "" ) => {
     console.log(`/api/post/?categoryId=${categoryId}&subCategory=${subCategory}&sort=${sort}&limit=${limit}&page=${page}&lon=${lon}&lat=${lat}&maxDistance=${maxDistance}`)
     return fetch(`/api/post/?categoryId=${categoryId}&subCategory=${subCategory}&sort=${sort}&limit=${limit}&page=${page}&lon=${lon}&lat=${lat}&maxDistance=${maxDistance}`, {
-        method: "GET"
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
+}
+
+export const login = (email, password) => {
+    console.log(email, password);
+    return fetch(`/api/user/login`, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email,
+            password: password
+        })
+
+    })
 }

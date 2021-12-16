@@ -392,7 +392,7 @@ const Main = (props) => {
                             </select>
                        </Col>
                     </Row>
-                    <Row>
+                    <Row style={{ borderBottom: "5px solid var(--cyan)" }}>
                         <Col lg={3} md={4} xs={12} className="searchCriteriaDiv">
                             {/* Search Criteria */}
                             <Row className="my-1">
@@ -455,8 +455,8 @@ const Main = (props) => {
                             <Row style={{ minHeight: "60vh" }}>
                                 {posts}
                             </Row>
-                            <Row >
-                                <Pagination className="d-flex justify-content-center">
+                            <Row className="py-2" style={{borderTop: "5px solid var(--cyan)"}}>
+                                <Pagination className="d-flex justify-content-center m-0 p-0">
                                     {paginate()}  
                                 </Pagination>
                             </Row>

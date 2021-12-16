@@ -14,7 +14,7 @@ const Navigator = (props) => {
         },
         {
             html: (
-                <a href="/posts" key="posts">
+                <a href="/" key="posts">
                     View Posts
                 </a>
             )
@@ -47,7 +47,7 @@ const Navigator = (props) => {
             
             checkNotifications().then(response => {
                 if (response.ok) {
-                    setNotifications(true);
+                    setNotifications(true); // not done
                 } else {
                     setNotifications(false);
                 }
