@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Col, Container, Row } from "react-bootstrap";
+import { Col, Container, Row, Offcanvas } from "react-bootstrap";
 import { checkNotifications } from '../../utils/api';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
 const Navigator = (props) => {
+
+    const [notifications, setNotifications] = useState([]);
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
 
     const navItems = [
         {
@@ -30,9 +38,9 @@ const Navigator = (props) => {
         },
         {
             html: props.loggedIn ? (
-                <a href="/account" key="Account">
+                <button type="button" className="noButton" key="Account" onClick={handleShow}>
                     Account
-                </a>
+                </button>
             ) : (
                 <a href="/login" key="login">
                         Login / Signup
@@ -40,7 +48,6 @@ const Navigator = (props) => {
             )
         }
     ]
-    const [notifications, setNotifications] = useState([])
 
     useEffect(() => {
         if (props.loggedIn) {
@@ -51,12 +58,10 @@ const Navigator = (props) => {
                 } else {
                     setNotifications(false);
                 }
-                console.log(response.status)
             }).catch(err => console.log(err));
             const interval = setInterval(async () => {
                 const response = await checkNotifications();
                 if (response.ok) {
-                    console.log("worked")
                     setNotifications(true);
                 } else {
                     setNotifications(false);
@@ -68,6 +73,23 @@ const Navigator = (props) => {
         }
     }, [])
     
+    function signOff() {
+        handleClose();
+        confirmAlert({
+            customUI: ({ onClose }) => {
+                return (
+                    <div className='custom-ui'>
+                        {/* create custom alert UI */}
+                    </div>
+                );
+            }
+        });
+    }
+
+    function confirmSignOff() {
+
+    }
+
     return (
         <Container fluid className="navMain sticky-top">
         <Container fluid="xxl">
@@ -97,6 +119,24 @@ const Navigator = (props) => {
                 </Col>
             </Row>
         </Container>
+            <Offcanvas show={show} onHide={handleClose} backdrop={false} enforceFocus={false} 
+            scroll={true} placement="end" className="accountOffCanvas">
+                <Offcanvas.Header closeButton style={{borderBottom: "5px solid var(--cyan)"}}>
+                    <Offcanvas.Title >Account</Offcanvas.Title>
+                </Offcanvas.Header>
+                <Offcanvas.Body className="p-0" style={{ backgroundColor: "#9191917c"}}>
+                    <div className="accountSelection py-2 ps-3">
+                        <a href="/" className="fs-5">View Your Posts</a>
+                    </div>
+                    <div className="accountSelection py-2 ps-3">
+                        <a href="/" className="fs-5">Edit Your Account</a>
+                    </div>
+                    <div className="accountSelection py-2 ps-3" onClick={() => signOff()}>
+                        <button className="noButton fs-5">Sign Out</button>
+                    </div>
+                    
+                </Offcanvas.Body>
+            </Offcanvas>
         </Container>
     );
 }

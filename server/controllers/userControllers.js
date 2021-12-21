@@ -56,7 +56,8 @@ const userController = {
             [{
                 username: body.username,
                 email: body.email,
-                password: body.password
+                password: body.password, 
+                phoneNumber: body.phoneNumber || undefined
             }],
             { new: true, runValidators: true })
             .then(userData => {
@@ -72,7 +73,18 @@ const userController = {
                     expires: expires
                 }).json("User Created");
             })
-            .catch(err => res.status(500).json({ errorMessage: 'A user with this email already exists. Please login or use a different email.', error: err }));
+            .catch(err => {
+                if (err.code === 11000) {
+                    if (err.keyValue.username) {
+                        return res.status(400).json({ errorMessage: 'A user with this username already exists. Please login or use a different username.'})
+                    } else if (err.keyValue.email) {
+                        return res.status(400).json({ errorMessage: 'A user with this email already exists. Please login or use a different email.' })
+                    }
+                } else if (err.errors.phoneNumber) {
+                    return res.status(400).json({ errorMessage: "Phone number is invalid", errMessage: err.errors.phoneNumber.message })
+                }
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
+            });
     },
 
     // Update user by ID

@@ -51,7 +51,6 @@ export const getAllPosts = (lon = "", lat = "", maxDistance = "", page = 1, limi
 }
 
 export const login = (email, password) => {
-    console.log(email, password);
     return fetch(`/api/user/login`, {
         method: "POST",
         headers: {
@@ -61,6 +60,20 @@ export const login = (email, password) => {
             email: email,
             password: password
         })
+    })
+}
 
+export const signup = (username, phoneNumber, email, password) => {
+    return fetch(`/api/user/signup`, {
+        method: "POST",
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email,
+            username: username,
+            password: password,
+            phoneNumber: phoneNumber === "" ? undefined : phoneNumber
+        })
     })
 }
