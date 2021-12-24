@@ -77,3 +77,21 @@ export const signup = (username, phoneNumber, email, password) => {
         })
     })
 }
+
+export const logout = () => {
+    return fetch(`/api/user/logout`, {
+        method: "GET",
+        headers: {
+            'content-type': 'application/json'
+        }
+    });
+}
+
+export const getUserInfo = () => {
+    return fetch(`/api/user/`, {
+        method: "GET",
+        headers: {
+            'content-type': 'application/json'
+        }
+    })
+}

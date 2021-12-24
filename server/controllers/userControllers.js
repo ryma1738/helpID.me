@@ -50,6 +50,19 @@ const userController = {
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
     },
 
+    userLogout(req, res) {
+        res.status(200).cookie("jwt", null, { 
+            httpOnly: true, 
+            sameSite: "strict",
+            maxAge: 0,
+            overwrite: true
+        }).cookie("loggedIn", false, {
+            sameSite: "strict",
+            maxAge: 0,
+            overwrite: true
+        }).json("User Logged Out");
+    },
+
     // Create new user
     createUser({ body }, res) {
         User.create(

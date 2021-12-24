@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Col, Container, Row, Offcanvas } from "react-bootstrap";
-import { checkNotifications } from '../../utils/api';
+import { Col, Container, Row, Offcanvas, Modal } from "react-bootstrap";
+import { checkNotifications, logout, getUserInfo } from '../../utils/api';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
 const Navigator = (props) => {
 
     const [notifications, setNotifications] = useState([]);
-    const [show, setShow] = useState(false);
+    const [showAccount, setShowAccount] = useState(false);
+    const [showEdit, setShowEdit] = useState(false);
+    const [userInfo, setUserInfo] = useState(null);
 
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
+    const handleEditClose = () => setShowEdit(false);
+    const handleShowEdit = () => setShowEdit(true);
+
+    const handleAccountClose = () => setShowAccount(false);
+    const handleShowAccount = () => setShowAccount(true);
 
     const navItems = [
         {
@@ -38,7 +43,7 @@ const Navigator = (props) => {
         },
         {
             html: props.loggedIn ? (
-                <button type="button" className="noButton" key="Account" onClick={handleShow}>
+                <button type="button" className="noButton" key="Account" onClick={handleShowAccount}>
                     Account
                 </button>
             ) : (
@@ -51,14 +56,15 @@ const Navigator = (props) => {
 
     useEffect(() => {
         if (props.loggedIn) {
-            
-            checkNotifications().then(response => {
+            getUserInfo().then(async response => {
                 if (response.ok) {
-                    setNotifications(true); // not done
-                } else {
-                    setNotifications(false);
+                    const userData = await response.json();
+                    setUserInfo(userData);
+                    setNotifications(userData.notifications);
+                    console.log(userData);
                 }
             }).catch(err => console.log(err));
+
             const interval = setInterval(async () => {
                 const response = await checkNotifications();
                 if (response.ok) {
@@ -74,11 +80,19 @@ const Navigator = (props) => {
     }, [])
     
     function signOff() {
-        handleClose();
+        handleAccountClose();
         confirmAlert({
             customUI: ({ onClose }) => {
                 return (
-                    <div className='custom-ui'>
+                    <div className='AccountDiv p-4'>
+                        <h3 className='text-center'>Are you sure you want to sign out?</h3>
+                        <div className='d-flex px-2' style={{ height: "8vh"}}>
+                            <button type="button" className="button fs-5 mt-auto me-auto"
+                                onClick={() => confirmSignOff()}>Sign Out</button>
+                            <button type="button" className="button fs-5 px-4 mt-auto ms-auto"
+                                onClick={() => onClose()}>No</button>
+                        </div>
+                        
                         {/* create custom alert UI */}
                     </div>
                 );
@@ -86,8 +100,9 @@ const Navigator = (props) => {
         });
     }
 
-    function confirmSignOff() {
-
+    async function confirmSignOff() {
+        await logout();
+        window.location.replace('/');
     }
 
     return (
@@ -119,17 +134,17 @@ const Navigator = (props) => {
                 </Col>
             </Row>
         </Container>
-            <Offcanvas show={show} onHide={handleClose} backdrop={false} enforceFocus={false} 
+            <Offcanvas show={showAccount} onHide={handleAccountClose} backdrop={false} enforceFocus={false} 
             scroll={true} placement="end" className="accountOffCanvas">
                 <Offcanvas.Header closeButton style={{borderBottom: "5px solid var(--cyan)"}}>
-                    <Offcanvas.Title >Account</Offcanvas.Title>
+                    <Offcanvas.Title >{userInfo.username}'s Account</Offcanvas.Title>
                 </Offcanvas.Header>
-                <Offcanvas.Body className="p-0" style={{ backgroundColor: "#9191917c"}}>
+                <Offcanvas.Body className="p-0">
                     <div className="accountSelection py-2 ps-3">
                         <a href="/" className="fs-5">View Your Posts</a>
                     </div>
-                    <div className="accountSelection py-2 ps-3">
-                        <a href="/" className="fs-5">Edit Your Account</a>
+                    <div className="accountSelection py-2 ps-3" onClick={() => {setShowEdit(true); setShowAccount(false);}}>
+                        <button className="noButton fs-5">Edit Account</button>
                     </div>
                     <div className="accountSelection py-2 ps-3" onClick={() => signOff()}>
                         <button className="noButton fs-5">Sign Out</button>
@@ -137,6 +152,11 @@ const Navigator = (props) => {
                     
                 </Offcanvas.Body>
             </Offcanvas>
+            <Modal size="lg" centered show={showEdit} onHide={() => setShowEdit(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title >Your Account Info</Modal.Title>
+                </Modal.Header>
+            </Modal>
         </Container>
     );
 }

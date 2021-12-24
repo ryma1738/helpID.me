@@ -4,6 +4,7 @@ const {
     getAllUsers,
     getOneUser,
     userLogin,
+    userLogout,
     createUser,
     updateUser,
     deleteUser,
@@ -18,6 +19,9 @@ router.route('/')
 router.route('/login')
     .post(userLogin); //  - body: {email: <email>, password: <password>}
 
+router.route('/logout')
+    .get(userLogout);
+    
 router.route('/signup')
     .post(createUser); //  - body: {username: <username>, email: <email>, password: <password>, phoneNumber: <801-888-8888> }
 
