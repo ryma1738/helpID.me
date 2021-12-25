@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Col, Container, Row, Offcanvas, Modal } from "react-bootstrap";
 import { checkNotifications, logout, getUserInfo } from '../../utils/api';
+import { createPhoneNumber } from '../../utils/helpers';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
@@ -10,6 +11,12 @@ const Navigator = (props) => {
     const [showAccount, setShowAccount] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
+    const [email, setEmail] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [pastNumber, setPastNumber] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const handleEditClose = () => setShowEdit(false);
     const handleShowEdit = () => setShowEdit(true);
@@ -54,42 +61,45 @@ const Navigator = (props) => {
         }
     ]
 
-    useEffect(() => {
+    useEffect(async () => {
         if (props.loggedIn) {
-            getUserInfo().then(async response => {
-                if (response.ok) {
-                    const userData = await response.json();
-                    setUserInfo(userData);
-                    setNotifications(userData.notifications);
-                    console.log(userData);
+            const response = await getUserInfo();
+            if (response.ok) {
+                const userData = await response.json();
+                setUserInfo(userData);
+                setNotifications(userData.notifications);
+                setEmail(userData.email);
+                setUsername(userData.username);
+                if (userData.phoneNumber) {
+                    setPhoneNumber(userData.phoneNumber);
                 }
-            }).catch(err => console.log(err));
-
-            const interval = setInterval(async () => {
-                const response = await checkNotifications();
-                if (response.ok) {
-                    setNotifications(true);
-                } else {
-                    setNotifications(false);
-                }
-                console.log(response.status)
-            }, 300000);
-
-            return () => clearInterval(interval);
+            }  
         }
-    }, [])
+
+        const interval = setInterval(async () => {
+            const response = await checkNotifications();
+            if (response.ok) {
+                setNotifications(true);
+            } else {
+                setNotifications(false);
+            }
+            console.log(response.status)
+        }, 300000);
+
+        return () => clearInterval(interval);
+    }, [props.loggedIn])
     
     function signOff() {
         handleAccountClose();
         confirmAlert({
             customUI: ({ onClose }) => {
                 return (
-                    <div className='AccountDiv p-4'>
+                    <div className='signOutDiv p-4'>
                         <h3 className='text-center'>Are you sure you want to sign out?</h3>
                         <div className='d-flex px-2' style={{ height: "8vh"}}>
                             <button type="button" className="button fs-5 mt-auto me-auto"
                                 onClick={() => confirmSignOff()}>Sign Out</button>
-                            <button type="button" className="button fs-5 px-4 mt-auto ms-auto"
+                            <button type="button" className="button fs-5 px-4 mt-auto"
                                 onClick={() => onClose()}>No</button>
                         </div>
                         
@@ -137,7 +147,7 @@ const Navigator = (props) => {
             <Offcanvas show={showAccount} onHide={handleAccountClose} backdrop={false} enforceFocus={false} 
             scroll={true} placement="end" className="accountOffCanvas">
                 <Offcanvas.Header closeButton style={{borderBottom: "5px solid var(--cyan)"}}>
-                    <Offcanvas.Title >{userInfo.username}'s Account</Offcanvas.Title>
+                    <Offcanvas.Title >{userInfo ? userInfo.username + "'s" : ""} Account</Offcanvas.Title>
                 </Offcanvas.Header>
                 <Offcanvas.Body className="p-0">
                     <div className="accountSelection py-2 ps-3">
@@ -153,9 +163,58 @@ const Navigator = (props) => {
                 </Offcanvas.Body>
             </Offcanvas>
             <Modal size="lg" centered show={showEdit} onHide={() => setShowEdit(false)}>
-                <Modal.Header closeButton>
+                <Modal.Header closeButton className="editAccountModal" style={{ borderBottom: "5px solid var(--cyan)" }}>
                     <Modal.Title >Your Account Info</Modal.Title>
                 </Modal.Header>
+                <Modal.Body className="editAccountModal py-0">
+                    <Container>
+                        <Row>
+                            <Col xs={12} as="form" className=" editAccountForm" onSubmit={(e) => e.preventDefault()}>
+                                <h4 className="pt-2">Edit Account Details:</h4>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="username" >Update Username:</label>
+                                        <input type="username" id="username" className="text-center" minLength={4}
+                                            maxLength={40} placeholder={username} valid
+                                            onChange={(e) => setUsername(e.target.value)}>
+                                        </input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="phoneNumber" >Update Phone #:</label>
+                                        <input type="tel" id="phoneNumber" className="text-center" value={phoneNumber} placeholder={phoneNumber ? phoneNumber : "888-888-8888"}
+                                            minLength={12} maxLength={12} onChange={(e) => setPhoneNumber(createPhoneNumber(e.target.value, phoneNumber))}></input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="email" >Update Email:</label>
+                                        <input type="email" id="email" className="text-center" minLength={10} maxLength={40}
+                                            placeholder={email} onChange={(e) => setEmail(e.target.value)}></input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="password" >Update Password:</label>
+                                        <input type="password" id="password" className="text-center" minLength={6} maxLength={25}
+                                            placeholder="Password" onChange={(e) => setPassword(e.target.value)}></input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="passwordConfirm" >Confirm Password:</label>
+                                        <input type="password" id="passwordConfirm" className="text-center" minLength={6} maxLength={25}
+                                            placeholder="Confirm Password" onChange={(e) => setConfirmPassword(e.target.value)}></input>
+                                    </div>
+                                </Row>
+                                <Row className="d-flex justify-content-center align-items-center my-3 pb-1">
+                                    <button type="submit" className="button" style={{maxWidth: "75%"}}>Apply Changes</button>
+                                </Row>
+                            </Col>
+                        </Row>
+                    </Container>
+                </Modal.Body>
             </Modal>
         </Container>
     );

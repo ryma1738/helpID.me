@@ -116,7 +116,7 @@ const userController = {
             userObj.phoneNumber = req.body.phoneNumber;
         }
         if (Object.keys(userObj).length === 0) {
-            return res.status(400).json({ errorMessage: 'You must enter a value to update!' })
+            return res.status(406).json({ errorMessage: 'You must enter a value to update!' })
         }
         User.findOneAndUpdate(
             { _id: req.user._id },
@@ -129,9 +129,35 @@ const userController = {
                     return;
                 }
                 const token = signToken(userData);
-                res.status(200).json([userData, token]);
+                const expires = new Date(new Date().getTime() + 210 * 1000);
+                res.status(200)
+                    .cookie("jwt", token, {
+                        sameSite: "strict",
+                        expires: expires,
+                        httpOnly: true
+                    }).cookie("loggedIn", true, {
+                        sameSite: "strict",
+                        expires: expires
+                    }).json(userData);
             })
-            .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
+            .catch(err => {
+                if (err.codeName === "DuplicateKey") {
+                    if (err.keyValue.username) {
+                        return res.status(400).json({ errorMessage: 'This username is already taken!' });
+                    } else if (err.keyValue.email) {
+                        return res.status(400).json({ errorMessage: 'This email is already taken!' });
+                    }
+                } else if (err.name) {
+                    if (err.name === "ValidationError") {
+                        if (err.errors.email) {
+                            return res.status(400).json({ errorMessage: err.errors.email.message });
+                        } else if (err.errors.phoneNumber) {
+                            return res.status(400).json({ errorMessage: err.errors.phoneNumber.message })
+                        }
+                    }
+                }
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
+            })
     },
 
     // delete user TODO: delete all of the users posts but not their tips

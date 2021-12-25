@@ -20,7 +20,7 @@ module.exports = {
                 const { data } = jwt.verify(token, secret, { maxAge: expiration });
                 req.user = data;
                 next()
-            } catch {
+            } catch (err) {
                 res.sendStatus(401);
             }
         } else {

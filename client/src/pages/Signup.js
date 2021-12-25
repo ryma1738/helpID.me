@@ -1,13 +1,13 @@
 import React, { useState, useEffect, } from 'react';
 import { Col, Container, Row, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { signup } from '../utils/api';
+import { createPhoneNumber } from '../utils/helpers';
 
 
 function Signup(props) {
 
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [pastNumber, setPastNumber] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,20 +28,6 @@ function Signup(props) {
         } else if (response.status === 500) {
             alert("An Unknown Error has occurred, please try again.")
         }
-    }
-
-    function createPhoneNumber(value) {
-        if (value.length === 3) {
-            if (phoneNumber.charAt(phoneNumber.length - 1) !== "-") {
-                return setPhoneNumber(value + "-");
-            }
-        } else if (value.length === 7) {
-            if (phoneNumber.charAt(phoneNumber.length -1) !== "-") {
-                return setPhoneNumber(value + "-");
-            }
-        }
-        setPhoneNumber(value);
-        
     }
 
     useEffect(() => {
@@ -77,7 +63,7 @@ function Signup(props) {
                                 </svg>
                             </OverlayTrigger>
                             <input type="tel" id="phoneNumber" className="text-center" value={phoneNumber} placeholder="888-888-8888"
-                                minLength={12} maxLength={12} onChange={(e) => createPhoneNumber(e.target.value)}></input>
+                                minLength={12} maxLength={12} onChange={(e) => setPhoneNumber(createPhoneNumber(e.target.value, phoneNumber))}></input>
                         </div>
                         <div className="my-3">
                             <label htmlFor="email" >Email:</label>

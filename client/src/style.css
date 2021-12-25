@@ -122,7 +122,19 @@ background-color: var(--grey);
   border: 4px solid var(--cyan);
   border-radius: 10px;
   min-height: 15vh;
+}
 
+.editAccountModal {
+  background-color: var(--main-color);
+}
+
+.editAccountForm div div {
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--cyan);
+}
+.editAccountForm input {
+  width: 50%;
+  margin-left: auto;
 }
 /* Main Styles */
 
