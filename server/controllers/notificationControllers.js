@@ -1,10 +1,10 @@
 const { User, Notification, Post, Tip } = require("../models");
 
 const notificationControllers = {
-    notifyUser(req, res) { // TODO: need to write a custom sort so the unread messages are first and in order by created at
+    notifyUser(req, res) { 
         User.findById(req.user._id)
             .select("notifications")
-            .populate("notifications", "-__v -onReadDelete")
+            .populate("notifications", "-__v")
             .sort({createdAt: "desc"})
             .lean()
             .then(userData => {
@@ -149,7 +149,7 @@ const notificationControllers = {
                     let containsId = userData.notifications.some(function (notification) {
                         return notification.equals(req.params.id)
                     });
-                    console.log(containsId)
+                    
                     if (containsId === true) {
                         User.findByIdAndUpdate(req.user._id, { $pull: { notifications: req.params.id } }, { new: true, runValidators: true }).lean()
                             .then(async () => {

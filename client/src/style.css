@@ -93,6 +93,12 @@ input:invalid:focus, select:invalid:focus {
   max-width: 100%;
 }
 
+.unreadNotifications {
+  border-radius: 50%;
+  background-color: var(--cyan);
+  border: 2px solid black;
+}
+
 .accountOffCanvas {
   background-color: var(--main-color);
   border-left: 5px solid var(--cyan);
@@ -191,7 +197,48 @@ background-color: var(--grey);
   width: 100%;
 }
 
+.imageCarousel {
+  border-bottom: 5px solid var(--cyan);
+  padding: none;
+}
 
+.imageCarousel li {
+  background-color: var(--jet);
+}
+
+.axis-vertical, .thumbs-wrapper {
+  margin: 0px !important;
+  padding-top: 10px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  padding-bottom: 5px !important;
+  overflow-x: scroll !important;
+}
+
+.thumb {
+  border: none !important;
+  box-shadow: 1px 1px 7px black;
+  max-height: 10vh;
+  min-width: 15vw !important;
+  max-width: 20vw !important;
+  object-fit: contain;
+  margin-right: 20px !important;
+  padding: 0 !important;
+  background-color: var(--main-color) !important;
+}
+
+.thumb.selected {
+  border: 4px solid var(--cyan) !important;
+  box-shadow: none;
+}
+
+.carouselImages {
+  float: left;
+  width:  100%;
+  height: 40vh;
+  object-fit: contain;
+  padding: 0;
+}
 
 
 /* --------------------------------------- */
@@ -227,6 +274,14 @@ background-color: var(--grey);
     border-bottom: 5px solid var(--cyan);
     border-right: none;
   }
+  .carouselImages {
+  height: 50vh;
+  }
+  .thumb {
+  max-height: 15vh;
+  min-width: 25vw !important;
+  max-width: 30vw !important;
+}
 
 }
 

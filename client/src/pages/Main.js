@@ -135,7 +135,7 @@ const Main = (props) => {
     }
     
     function singlePost(id) {
-        console.log(id)
+        window.location.replace(`/listing/view/${id}`);
     }
 
     function loadSubCategories(categoryName) {

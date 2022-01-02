@@ -5,8 +5,9 @@ import { renewLogin } from './utils/api';
 import Navigator from "./components/Navbar";
 import Login from "./pages/Login";
 import Signup from './pages/Signup';
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 import Main from "./pages/Main";
+import IndividualPost from './pages/IndividualPost';
 
 function App() {
 
@@ -14,7 +15,7 @@ function App() {
 
   useEffect(() => {
     // credit: https://stackoverflow.com/questions/65049812/how-to-call-a-function-every-minute-in-a-react-component/65049865
-    let cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)loggedIn\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    let cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)loggedIn\s*\s*([^;]*).*$)|^.*$/, "$1");
     if (cookieValue) {
       renewLogin().then(response => {
         if (response.ok) {
@@ -44,6 +45,7 @@ function App() {
         <Route exact path='/' element={<Main />} />
         <Route exact path='/login' loggedIn={loggedIn} element={<Login />} />
         <Route exact path='/signup' loggedIn={loggedIn} element={<Signup />} />
+        <Route path="/listing/:view/:postId" element={<IndividualPost />} />
       </Routes>
       {/* <Footer /> */}
     </BrowserRouter>

@@ -3,7 +3,7 @@ export const renewLogin = () => {
     return fetch('/api/user/renew', {
         method: "GET",
         headers: {
-            'Content-Type': 'application/json'
+            'content-type': 'application/json'
         }
     });
 }
@@ -26,7 +26,7 @@ export const getZipCoords = (zipCode) => {
     return fetch('/api/post/zip/' + zipCode, {
         method: "GET",
         headers: {
-            'Content-Type': 'application/json'
+            'content-type': 'application/json'
         }
     });
 }
@@ -35,25 +35,52 @@ export const checkNotifications = () => {
     return fetch('/api/notification/', {
         method: "GET",
         headers: {
-            'Content-Type': 'application/json'
+            'content-type': 'application/json'
         }
     });
+}
+
+export const markAsRead = (id) => {
+    return fetch(`/api/notification/${id}`, {
+        method: "PUT",
+        headers: {
+            'content-type': 'application/json'
+        }
+    })
+}
+
+export const deleteNotification = (id) => {
+    return fetch(`/api/notification/${id}`, {
+        method: "DELETE",
+        headers: {
+            'content-type': 'application/json'
+        }
+    })
 }
 
 export const getAllPosts = (lon = "", lat = "", maxDistance = "", page = 1, limit = "", sort = "Most Recent", categoryId = "", subCategory = "" ) => {
     return fetch(`/api/post/?categoryId=${categoryId}&subCategory=${subCategory}&sort=${sort}&limit=${limit}&page=${page}&lon=${lon}&lat=${lat}&maxDistance=${maxDistance}`, {
         method: "GET",
         headers: {
-            'Content-Type': 'application/json'
+            'content-type': 'application/json'
         }
     });
+}
+
+export const getOnePost = (postId) => {
+    return fetch(`/api/post/${postId}`, {
+        method: "GET",
+        headers: {
+            'content-type': 'application/json'
+        }
+    })
 }
 
 export const login = (email, password) => {
     return fetch(`/api/user/login`, {
         method: "POST",
         headers: {
-            'Content-Type': 'application/json'
+            'content-type': 'application/json'
         },
         body: JSON.stringify({
             email: email,
@@ -92,5 +119,20 @@ export const getUserInfo = () => {
         headers: {
             'content-type': 'application/json'
         }
+    })
+}
+
+export const updateAccount = (username, email, password, phoneNumber) => {
+    return fetch(`/api/user/`, {
+        method: "PUT",
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            username: username === "" ? undefined : username,
+            email: email === "" ? undefined : email,
+            password: password === "" ? undefined : password,
+            phoneNumber: phoneNumber === "" ? undefined : phoneNumber
+        })
     })
 }
