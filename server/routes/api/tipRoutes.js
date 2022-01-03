@@ -11,7 +11,7 @@ const {
 // Set up image Uploading
 const storage = multer.diskStorage({
     destination: (req, file, cb) => { // destination for files
-        cb(null, './imageUploads')
+        cb(null, './public/temp')
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + '-' + file.originalname)
@@ -41,12 +41,12 @@ router.route('/')
                 if (err.message === "File too large") {
                     return res.status(400).json({errorMessage: "Your file is too large. The maximum size for a file is 0.5MB"});
                 }
-                return res.status(400).json({ errorType: "Unknown", error: err });
+                return res.status(400).json({ errorMessage: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
                 }
-                return res.status(500).json({ errorType: "Unknown", error: err });
+                return res.status(500).json({ errorMessage: "Unknown", error: err });
             }
             createTip(req, res);
         });

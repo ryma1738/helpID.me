@@ -15,7 +15,7 @@ const {
 const multer = require('multer');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => { // destination for files
-        cb(null, './imageUploads')
+        cb(null, './public/temp')
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + '-' + file.originalname)
@@ -50,12 +50,12 @@ router.route('/')
                 } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
                     return res.status(400).json({ errorMessage: "You can only upload a max of 5 images" });
                 }
-                return res.status(400).json({ errorType: "Unknown", error: err });
+                return res.status(400).json({ errorMessage: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
                 }
-                return res.status(500).json({ errorType: "Unknown", error: err });
+                return res.status(500).json({ errorMessage: "Unknown", error: err });
             }
             createPost(req, res);
         });
@@ -78,12 +78,12 @@ router.route('/user/:id')
                 } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
                     return res.status(400).json({ errorMessage: "You can only upload a max of 5 images" });
                 }
-                return res.status(400).json({ errorType: "Unknown", error: err });
+                return res.status(400).json({ errorMessage: "Unknown", error: err });
             } else if (err) {
                 if (err.storageErrors) {
                     return res.status(400).json({ errorMessage: "Only .png, .jpg, and .jpeg image formats allowed!" })
                 }
-                return res.status(500).json({ errorType: "Unknown", error: err });
+                return res.status(500).json({ errorMessage: "Unknown", error: err });
             }
             editPost(req, res);
         });

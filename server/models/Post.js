@@ -29,10 +29,7 @@ const postSchema = new Schema(
         subCategory: {
             type: String
         },
-        images: [{
-            data: Buffer,
-            contentType: String
-        }],
+        images: [String],
         video: {
             type: String,
             match: [/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/, "Not a valid Youtube link!"]

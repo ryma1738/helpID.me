@@ -32,7 +32,7 @@ const tipControllers = {
             userId: req.user._id,
             postId: req.body.id,
             image: req.file ? {
-                data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
+                data: fs.readFileSync(path.join(__dirname + "../../public/" + req.file.filename)),
                 contentType: req.file.mimetype
             } : undefined
         }], { new: true, runValidators: true })
@@ -85,7 +85,7 @@ const tipControllers = {
             });
 
         if (req.file) {
-            fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
+            fs.rm(path.join(__dirname + "../../public/" + req.file.filename), {}, (err) => {
                 if (err) {
                     console.log(err);
                 }
@@ -102,7 +102,7 @@ const tipControllers = {
         }
         if (req.file) {
             data.image = {
-                data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.file.filename)),
+                data: fs.readFileSync(path.join(__dirname + "../../public/" + req.file.filename)),
                 contentType: req.file.mimetype
             }
         }
@@ -129,7 +129,7 @@ const tipControllers = {
                 res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             });
         if (req.file) {
-            fs.rm(path.join(__dirname + "../../imageUploads/" + req.file.filename), {}, (err) => {
+            fs.rm(path.join(__dirname + "../../public/" + req.file.filename), {}, (err) => {
                 if (err) {
                     console.log(err);
                 }

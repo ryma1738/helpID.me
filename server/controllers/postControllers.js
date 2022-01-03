@@ -4,6 +4,16 @@ const path = require('path');
 const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages, format_date } = require('../utils/helpers')
 const zipCodes = require("../utils/zipCodes.json");
 
+function removeTempImages(req) {
+    for (let i = 0; i < req.files.length; i++) {
+        fs.rm(path.join(__dirname + "../../public/temp/" + req.files[i].filename), {}, (err) => {
+            if (err) {
+                console.log(err);
+            }
+        });
+    }
+}
+
 const postControllers = {
     getAllPosts(req, res) { // add sorting to getAllPosts
         let search = {}
@@ -88,8 +98,8 @@ const postControllers = {
                 
                 for (let i = startingIndex; i < endingIndex; i++) {
                     let postData = postDataObject[i].toJSON();
-                    postData.images = encodeImage(postData);
                     postData.date = format_date(postData.date);
+                    postData.images = postData.images[0];
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
@@ -147,8 +157,8 @@ const postControllers = {
                 let markers = [];
                 for (let i = 0; i < results.docs.length; i++) {
                     let postData = results.docs[i].toJSON();
-                    postData.images = encodeImage(postData);
                     postData.date = format_date(postData.date);
+                    postData.images = postData.images[0];
                     delete postData.userId._id;
                     delete postData.userId.id;
                     compiledPostData.push({ data: postData });
@@ -181,7 +191,6 @@ const postControllers = {
                     return res.status(404).json({ errorMessage: "Post not found" });
                 }
                 let postData = postDataObject.toJSON();
-                postData.images = encodeImages(postDataObject);
                 postData.date = format_date(postData.date);
                 delete postData.userId._id;
                 delete postData.userId.id;
@@ -249,8 +258,8 @@ const postControllers = {
                 let compiledPostData = [];
                 for (let i = 0; i < postDataObject.length; i++) {
                     let postData = postDataObject[i].toJSON();
-                    postData.images = encodeImage(postData);
                     postData.date = format_date(postData.date);
+                    postData.images = postData.images[0];
                     delete postData.tips;
                     const expires = await postDataObject[i].expiresIn();
                     compiledPostData.push({ data: postData, totalTips: postDataObject[i].tipsReceived(), expiresIn: expires });
@@ -275,7 +284,6 @@ const postControllers = {
                 }
                 const expires = await postDataObject.expiresIn();
                 let postData = postDataObject.toJSON();
-                postData.images = encodeImages(postDataObject);
                 postData.date = format_date(postData.date);
 
                 for (let i = 0; i < postData.tips.length; i++) {
@@ -303,28 +311,23 @@ const postControllers = {
             });
     },
     async createPost(req, res) {
-        let images = []
-        if (req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                images.push({
-                    data: fs.readFileSync(path.join(__dirname + "../../imageUploads/" + req.files[i].filename)),
-                    contentType: req.files[i].mimetype
-                })
-            }
-        }
         if (req.body.subCategory) {
             try {
                 const categoryData = await Category.findById(req.body.categoryId).lean()
                 if (!categoryData || Object.keys(categoryData).length === 0) {
+                    removeTempImages(req);
                     return res.status(400).json({errorMessage: "The category you selected was not found!"})
                 }
                 if (!categoryData.subCategories.includes(req.body.subCategory)) {
+                    removeTempImages(req);
                     return res.status(400).json({ errorMessage: "The category you selected does not contain the sub category " + req.body.subCategory });
                 }
             } catch (err) {
                 if (err.name === "CastError") {
+                    removeTempImages(req);
                     return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
                 }
+                removeTempImages(req);
                 return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             }
         }
@@ -332,17 +335,9 @@ const postControllers = {
         if (req.body.video) {
             try {
                 video = req.body.video.replace("watch?v=", "embed/");
-            } catch(err) {
-                res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
-            }
-        }
-        if (req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                fs.rm(path.join(__dirname + "../../imageUploads/" + req.files[i].filename), {}, (err) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                });
+            } catch(err) { // add more error handling here ******************************************
+                removeTempImages(req);
+                return res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             }
         }
         Post.create([{
@@ -352,14 +347,48 @@ const postControllers = {
             userId: req.user._id,
             categoryId: req.body.categoryId,
             subCategory: req.body.subCategory || undefined,
-            images: images,
             video: video,
             contactNumber: req.body.contactNumber || "000-000-0000",
             location: {coordinates: [req.body.lon, req.body.lat]}
         }],
             { new: true, runValidators: true })
-            .then(postData => res.status(200).json({ message: "Post Created Successfully" }))
+            .then(postData => {
+                if (req.files.length > 0) {
+                    let images = [];
+                    fs.mkdirSync(path.join(__dirname + "../../public/" + postData[0]._id));
+                    for (let i = 0; i < req.files.length; i++) {
+                        fs.copyFile(path.join(__dirname + "../../public/temp/" + req.files[i].filename), 
+                            path.join(__dirname + "../../public/" + postData[0]._id + "/" + req.files[i].filename), (err) => {
+                                if (err) console.log(err);
+                            });
+                        fs.rm(path.join(__dirname + "../../public/temp/" + req.files[i].filename), {}, (err) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                        images.push("/images/" + postData[0]._id + "/" + req.files[i].filename);
+                    }
+                    Post.findByIdAndUpdate(postData[0]._id, {images: images}, { new: true, runValidators: true}).lean().then(postData => {
+                        res.status(200).json({ message: "Post Created Successfully" });
+                    }).catch(err => {
+                        res.status(500).json({errorMessage: "Image upload failed, post creation terminated", error: err, errMessage: err.message})
+                        fs.rmdir(path.join(__dirname + "../../public/" + postData[0]._id), (err) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                        removeTempImages(req);
+                        Post.deleteOne({_id: postData._id});
+                    })
+                } else res.status(200).json({ message: "Post Created Successfully" });
+            })
             .catch(err => {
+                fs.rmdir(path.join(__dirname + "../../public/" + postData[0]._id), { recursive: true }, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
+                removeTempImages(req);
                 if (err._message === "Post validation failed") {
                     if (err.errors.categoryId) {
                         return res.status(400).json({ errorMessage: "Category not found, please enter a valid category id" });
@@ -400,37 +429,36 @@ const postControllers = {
             if (req.body.removeImages && req.files.length > 0) {
                 const totalImages = prePostData.images.length - req.body.removeImages.length + req.files.length;
                 if (totalImages > 5) {
-                    for (let i = 0; i < req.files.length; i++) {
-                        fs.rm(path.join(__dirname + "/../imageUploads/" + req.files[i].filename), {}, (err) => {
-                            if (err) {
-                                console.log(err);
-                            }
-                        });
-                    }
+                    removeTempImages(req);
                     return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + totalImages + " images total" })
                 }
             }
             let i = 0;
             if (req.body.removeImages) {
-                while (i < req.body.removeImages.length) {
-                    const results = await removeImages(i, req);
-                    if (results.status = 200) {
-                        i++
-                    } else {
-                        return res.status(results.status).json({ message: results.message, failedOn: i });
-                        //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
+                if (Array.isArray(req.body.removeImages)) {
+                    while (i < req.body.removeImages.length) {
+                        const results = await removeImages(i, req);
+                        if (results.status === 200) {
+                            i++
+                        } else {
+                            return res.status(results.status).json({ message: results.message, failedOn: i });
+                            
+                        }
+                    }
+                } else {
+                    const results = await removeImages(undefined, req);
+                    if (results.status !== 200) {
+                        return res.status(results.status).json({ message: results.message });
+                        
                     }
                 }
+                
             }
             i = 0;
             if (req.files.length > 0) {
                 if (req.files.length + prePostData.images.length > 5 && !req.body.removeImages) {
                     for (let i = 0; i < req.files.length; i++) {
-                        fs.rm(path.join(__dirname + "/../imageUploads/" + req.files[i].filename), {}, (err) => {
-                            if (err) {
-                                console.log(err);
-                            }
-                        });
+                        removeTempImages(req);
                     }
                     return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + (req.files.length + prePostData.images.length) + " images total" })
                 }
@@ -440,7 +468,7 @@ const postControllers = {
                         i++
                     } else {
                         return res.status(results.status).json({ message: results.message, failedOn: i });
-                        //Please note that if one fails it stops but it may have uploaded some of the images. need to inform on the front end.
+                        
                     }
                 }
             }
@@ -507,6 +535,11 @@ const postControllers = {
                 } else {
                     res.status(200).json({ message: "Post deleted successfully" })
                     Tip.deleteMany({postId: req.params.id}).catch(err => console.log(err));
+                    fs.rmdir(path.join(__dirname + "../../public/" + postData._id), { recursive: true }, (err) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
                 }
             })
             .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }))
