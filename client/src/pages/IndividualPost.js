@@ -4,6 +4,7 @@ import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a lo
 import { Carousel } from 'react-responsive-carousel';
 import { useParams } from 'react-router-dom';
 import { getOnePost, getUserInfo } from '../utils/api';
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 function IndividualPost(props) {
     const params = useParams();
@@ -40,7 +41,8 @@ function IndividualPost(props) {
                 <div id={0}>
                     <img
                         alt={postInfo.video}
-                        src={"http://img.youtube.com/vi/" + postInfo.video.split("embed/")[1] + "/0.jpg"}
+                        key={postInfo.video}
+                        src={"http://LazyLoadImage.youtube.com/vi/" + postInfo.video.split("embed/")[1] + "/0.jpg"}
                         className="carouselThumbs"
                     />
                 </div>
@@ -48,8 +50,9 @@ function IndividualPost(props) {
         }
         const images = postInfo.images.map((image, index) => thumbs.push(
             <div>
-                <img
+                <LazyLoadImage
                     id={postInfo.video ? index + 1 : index}
+                    key={postInfo.video ? index + 1 : index}
                     alt={"https://" + window.location.hostname + image}
                     src={image}
                     className="carouselThumbs"
@@ -86,7 +89,7 @@ function IndividualPost(props) {
                     </div>
                     {postInfo.images.map(image => (
                         <div>
-                            <img
+                            <LazyLoadImage
                                 alt={"https://" + window.location.hostname + image}
                                 src={image}
                                 className="carouselImages"
@@ -100,7 +103,7 @@ function IndividualPost(props) {
                     onChange={(index, item) => thumbScrollChange(index, item)}>
                     {postInfo.images.map(image => (
                         <div>
-                            <img
+                            <LazyLoadImage
                                 alt={image}
                                 src={image}
                                 className="carouselImages"

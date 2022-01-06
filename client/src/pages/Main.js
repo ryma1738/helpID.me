@@ -236,7 +236,7 @@ const Main = (props) => {
                         <div className="postCards" onClick={() => singlePost(post.data._id)}>
                             <Row className="d-flex justify-content-center postCardsImageDiv">
                                 {post.data.images ? (
-                                    <img
+                                    <LazyLoadImage
                                         alt={"https://" + window.location.hostname + post.data.images}
                                         src={post.data.images}
                                         className="postCardsImage"

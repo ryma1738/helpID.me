@@ -9,7 +9,7 @@ import markerImage from "../../assets/images/MapPin.png";
 import { Spinner, } from "react-bootstrap";
 
 function openPost(id) {
-    // redirect to post
+    window.location.replace(`/listing/view/${id}`);
 }
 
 const Map = (props) => {

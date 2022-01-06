@@ -228,10 +228,10 @@ const Navigator = (props) => {
                         notifications.map((notification, index) => {
                             if (notification.postId) {
                                 return (
-                                    <div>
+                                    <div key={index + "notify"}>
                                         <Alert variant={notification.read ? "secondary" : "info"} className="pb-0" show={showNotifications[index]} onClose={() => removeNotification(notification._id, index)} dismissible>
                                             <p className="text-dark" onClick={() => {
-                                                // send user to individual post
+                                                window.location.replace(`/listing/view/${notification.postId}`);
                                             }}>{notification.message}</p>
                                         </Alert>
                                     </div>

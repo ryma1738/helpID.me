@@ -2,6 +2,16 @@ const { Post, Tip, User, Notification } = require("../models");
 const fs = require('fs');
 const path = require('path');
 
+function removeTempImage(req) {
+    if (req.file) {
+        fs.rm(path.join(__dirname + "../../public/temp/" + req.files.filename), {}, (err) => {
+            if (err) {
+                console.log(err);
+            }
+        });
+    }
+}
+
 const tipControllers = {
 
     getAllTips(req, res) { // for dev use only / admin use?
@@ -17,9 +27,11 @@ const tipControllers = {
         try {
             const postData = await Post.findById(req.body.id).select('userId').lean();
             if (postData.userId === req.user._id) {
+                removeTempImage(req);
                 return res.status(403).json({ errorMessage: "You can not add a tip to your own post" })
             }
         } catch (err) {
+            removeTempImage(req);
             if (err.name === "CastError") {
                 return res.status(400).json({ errorMessage: "Post was not found" })
             }
@@ -31,12 +43,23 @@ const tipControllers = {
             subject: req.body.subject,
             userId: req.user._id,
             postId: req.body.id,
-            image: req.file ? {
-                data: fs.readFileSync(path.join(__dirname + "../../public/" + req.file.filename)),
-                contentType: req.file.mimetype
-            } : undefined
         }], { new: true, runValidators: true })
-            .then(data => {
+            .then(async data => {
+                if (req.file) {
+                    fs.copyFile(path.join(__dirname + "../../public/temp/" + req.files.filename),
+                        path.join(__dirname + "../../public/" + req.body.id + "/" + req.files.filename), (err) => {
+                            if (err) console.log(err);
+                        });
+                    removeTempImage(req);
+                    try {
+                        await Tip.findByIdAndUpdate(data[0]._id,
+                            { image: "/" + req.body.id + "/" + req.files.filename },
+                            { new: true, runValidators: true }).lean();
+                    } catch (err) {
+                        await Tip.findByIdAndDelete(data[0]._id);
+                        return res.status(500).json({ errorMessage: "Failed to upload Image, please try again.", error: err, errMessage: err.message });
+                    }
+                }
                 Tip.findOne({ _id: data[0]._id }).select("_id postId id").then(tipData => {
                     Post.findByIdAndUpdate(req.body.id, { $push: { tips: tipData._id } }, { new: true, runValidators: true }).lean()
                         .then(postData => {
@@ -55,18 +78,21 @@ const tipControllers = {
                                 .catch(err => res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message }));
                         })
                         .catch(async err => {
+                            removeTempImage(req);
                             res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
                             await Tip.deleteOne({ _id: tipData._id });
                             await Post.findByIdAndUpdate(tipData.postId, { $pull: {tips: tipData._id } });
 
                         });
                 }).catch(async err => {
+                    removeTempImage(req);
                     res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                     await Tip.deleteOne({ _id: tipData._id });
                     await Post.findByIdAndUpdate(tipData.postId, { $pull: { tips: tipData._id } });
                 });
             })
             .catch(err => {
+                removeTempImage(req);
                 if (err.name === "ValidationError") {
                     if (err.errors.subject && err.errors.title) {
                         return res.status(400).json({ errorMessage: "The title and subject of the tip are required!" })
@@ -79,20 +105,11 @@ const tipControllers = {
                     }
 
                 } else {
-                    console.log(err)
                     res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
                 }
             });
-
-        if (req.file) {
-            fs.rm(path.join(__dirname + "../../public/" + req.file.filename), {}, (err) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
-        }
     },
-    editTip(req, res) {
+    async editTip(req, res) {
         let data = {}
         if (!req.file && req.query.deleteImage) {
             Tip.findOne({ _id: req.body.id, userId: req.user._id }, function (err, tipData) {
@@ -101,10 +118,13 @@ const tipControllers = {
             })
         }
         if (req.file) {
-            data.image = {
-                data: fs.readFileSync(path.join(__dirname + "../../public/" + req.file.filename)),
-                contentType: req.file.mimetype
-            }
+            const tipData = await Tip.findById(req.body.id).lean();
+            fs.copyFile(path.join(__dirname + "../../public/temp/" + req.files.filename),
+                path.join(__dirname + "../../public/" + tipData.postId + "/" + req.files.filename), (err) => {
+                    if (err) console.log(err);
+                });
+            removeTempImage(req);
+            data.image = "/" + tipData.postId + "/" + req.files.filename;
         }
         if (req.body.title) {
             data.title = req.body.title
@@ -116,7 +136,7 @@ const tipControllers = {
             return res.status(400).json({ errorMessage: "You must enter data to update tip" })
         }
         if (Object.keys(data).length === 0 && req.query.deleteImage && !req.file) {
-            return res.status(200).json({ message: "Image deleted successfully" })
+            return res.status(200).json({ message: "Image deleted successfully" });
         }
         Tip.findOneAndUpdate({ _id: req.body.id, userId: req.user._id }, data, { new: true, runValidators: true })
             .then(tipData => {
@@ -126,15 +146,13 @@ const tipControllers = {
                 res.status(200).json({ message: "Tip updated successfully" });
             })
             .catch(err => {
+                fs.rm(path.join(__dirname + "../../public/" + tipData.postId + "/" + req.files[index].filename), {}, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
                 res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message });
             });
-        if (req.file) {
-            fs.rm(path.join(__dirname + "../../public/" + req.file.filename), {}, (err) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
-        }
     },
     async deleteTip(req, res) {
         Tip.findOneAndDelete({ _id: req.body.id, userId: req.user._id })
@@ -142,6 +160,11 @@ const tipControllers = {
                 if (!tipData) {
                     return res.status(404).json({ message: "Tip not found or you do not have permissions to delete this tip" })
                 }
+                fs.rm(path.join(__dirname + "../../public" + tipData.image), {}, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
                 Post.findByIdAndUpdate(tipData.postId, { $pull: { tips: tipData._id } }, {runValidators: true}).lean()
                     .then(postData => res.status(200).json({ message: 'Tip deleted successfully' }))
                     .catch(err => {

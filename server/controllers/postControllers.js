@@ -420,6 +420,7 @@ const postControllers = {
         // Images Editing starts
         if (req.body.removeImages || req.files.length > 0) {
             const prePostData = await Post.findOne({ _id: req.params.id, userId: req.user._id }).catch(err => {
+                removeTempImages(req);
                 if (err.name === "CastError") {
                     return res.status(404).json({ errorMessage: "That Post was not found" });
                 }
@@ -457,9 +458,7 @@ const postControllers = {
             i = 0;
             if (req.files.length > 0) {
                 if (req.files.length + prePostData.images.length > 5 && !req.body.removeImages) {
-                    for (let i = 0; i < req.files.length; i++) {
-                        removeTempImages(req);
-                    }
+                    removeTempImages(req);
                     return res.status(400).json({ errorMessage: "You can have upto 5 images total. With your current changes their would be " + (req.files.length + prePostData.images.length) + " images total" })
                 }
                 while (i < req.files.length) {
@@ -467,6 +466,7 @@ const postControllers = {
                     if (results.status = 200) {
                         i++
                     } else {
+                        removeTempImages(req);
                         return res.status(results.status).json({ message: results.message, failedOn: i });
                         
                     }
