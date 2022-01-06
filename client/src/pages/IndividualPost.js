@@ -49,9 +49,9 @@ function IndividualPost(props) {
         const images = postInfo.images.map((image, index) => thumbs.push(
             <div>
                 <img
-                    alt={image._id}
                     id={postInfo.video ? index + 1 : index}
-                    src={"data:" + image.contentType + ";base64, " + image.imageBase64}
+                    alt={"https://" + window.location.hostname + image}
+                    src={image}
                     className="carouselThumbs"
                 />
             </div>
@@ -87,8 +87,8 @@ function IndividualPost(props) {
                     {postInfo.images.map(image => (
                         <div>
                             <img
-                                alt={image._id}
-                                src={"data:" + image.contentType + ";base64, " + image.imageBase64}
+                                alt={"https://" + window.location.hostname + image}
+                                src={image}
                                 className="carouselImages"
                             />
                         </div>
@@ -101,8 +101,8 @@ function IndividualPost(props) {
                     {postInfo.images.map(image => (
                         <div>
                             <img
-                                alt={image._id}
-                                src={"data:" + image.contentType + ";base64, " + image.imageBase64}
+                                alt={image}
+                                src={image}
                                 className="carouselImages"
                             />
                         </div>

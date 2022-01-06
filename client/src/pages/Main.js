@@ -230,14 +230,15 @@ const Main = (props) => {
             }
             const postData = await response.json();
             setPosts(postData.posts.map(post => {
+                console.log(post.data.images)
                 return (
                     <Col lg={6} md={12} className="p-2" key={post.data._id}>
                         <div className="postCards" onClick={() => singlePost(post.data._id)}>
                             <Row className="d-flex justify-content-center postCardsImageDiv">
-                                {post.data.images.imageBase64 ? (
-                                    <LazyLoadImage
-                                        alt={post.data.title}
-                                        src={"data:" + post.data.images.contentType + ";base64, " + post.data.images.imageBase64}
+                                {post.data.images ? (
+                                    <img
+                                        alt={"https://" + window.location.hostname + post.data.images}
+                                        src={post.data.images}
                                         className="postCardsImage"
                                     />
                                 ) : (

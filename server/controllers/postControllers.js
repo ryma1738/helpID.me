@@ -366,7 +366,7 @@ const postControllers = {
                                 console.log(err);
                             }
                         });
-                        images.push("/images/" + postData[0]._id + "/" + req.files[i].filename);
+                        images.push("/" + postData[0]._id + "/" + req.files[i].filename);
                     }
                     Post.findByIdAndUpdate(postData[0]._id, {images: images}, { new: true, runValidators: true}).lean().then(postData => {
                         res.status(200).json({ message: "Post Created Successfully" });

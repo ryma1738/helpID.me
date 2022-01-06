@@ -119,10 +119,10 @@ try {
     console.log("Users Seeded");
 
     let posts = []
-    const image = "/images/1581977710_bbb.jpg"
-    const image1 = "/images/life_is_strange___blazing_up_by_friedrichsteiner-dar73po.png"
-    const image2 = "/images/1535796377_steamuserimages-a.akamaihd.net.jpg"
-    const image3 = "/images/life_is_strange___chloe_s_thinking_time_by_katewindhelm-d8g3ycv.jpg"
+    const image = "/1581977710_bbb.jpg"
+    const image1 = "/life_is_strange___blazing_up_by_friedrichsteiner-dar73po.png"
+    const image2 = "/1535796377_steamuserimages-a.akamaihd.net.jpg"
+    const image3 = "/life_is_strange___chloe_s_thinking_time_by_katewindhelm-d8g3ycv.jpg"
     const images = [image, image1, image2, image3]
     const categories = await Category.find({}).select("_id").lean();
     let categoryIds = [];

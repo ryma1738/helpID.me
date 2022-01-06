@@ -12,16 +12,8 @@ app.use(cors({credentials: true, origin: "http://localhost:3000"}));
 app.use(cookieParser())
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use('/', routes)
- 
-// open react app during production build
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/build')));
-}
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-});
+app.use('/', routes);
+app.use(express.static("public"));
 
 db.once('open', () => {
     app.listen(PORT, () => {
