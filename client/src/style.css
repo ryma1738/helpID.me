@@ -38,18 +38,18 @@ body {
   box-shadow: none;
 }
 
-input, select{
+input, textarea, select{
   outline: none;
   border-radius: 5px;
   border: 3px solid var(--jet);
   background-color: var(--main-color);
 }
 
-input:focus, select:focus {
+input:focus, textarea:focus, select:focus {
   box-shadow: 1px 1px 5px var(--jet);
 }
 
-input:invalid:focus, select:invalid:focus {
+input:invalid:focus, textarea:invalid:focus, select:invalid:focus {
   border: 3px solid red;
   box-shadow: 1px 1px 5px var(--jet);
 }
@@ -130,7 +130,7 @@ background-color: var(--grey);
   min-height: 15vh;
 }
 
-.editAccountModal {
+.modalForm {
   background-color: var(--main-color);
 }
 
@@ -138,7 +138,7 @@ background-color: var(--grey);
   padding-bottom: 10px;
   border-bottom: 3px solid var(--cyan);
 }
-.editAccountForm input {
+.modalFormInput {
   width: 50%;
   margin-left: auto;
 }
@@ -256,16 +256,16 @@ background-color: var(--grey);
 }
 /* Individual post styles */
 
-.individualTitle {
+.borderB_grey {
   border-bottom: 2px solid var(--grey);
 }
 
-.individualSubject {
+.borderB_grey_sm {
   border-bottom: 1px solid var(--grey);
 }
 
-.individualDiv {
-  border-bottom: 2px solid var(--grey);
+.borderB_cyan{
+  border-bottom: 2px solid var(--cyan);
 }
 
 .individualInfoDivs {

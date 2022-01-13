@@ -1,5 +1,5 @@
 import React, { useState, useEffect, } from 'react';
-import { Col, Container, Row, Spinner, Pagination } from "react-bootstrap";
+import { Col, Container, Row, Spinner, Pagination} from "react-bootstrap";
 import Maps from '../components/Maps';
 import { getAllPosts, getCategories, getZipCoords } from '../utils/api';
 import {LazyLoadImage} from "react-lazy-load-image-component";

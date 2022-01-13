@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 // import Footer from "./components/Footer";
 import Main from "./pages/Main";
 import IndividualPost from './pages/IndividualPost';
+import NotFound from './pages/NotFound';
 
 function App() {
 
@@ -46,6 +47,7 @@ function App() {
         <Route path='/login' loggedIn={loggedIn} element={<Login />} />
         <Route path='/signup' loggedIn={loggedIn} element={<Signup />} />
         <Route path="/listing/:view/:postId" element={<IndividualPost loggedIn={loggedIn}/>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       {/* <Footer /> */}
     </BrowserRouter>

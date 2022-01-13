@@ -1,25 +1,59 @@
 import React, { useState, useEffect, } from 'react';
-import { Col, Container, Row, Spinner } from "react-bootstrap";
+import { Col, Container, Row, Spinner, Modal } from "react-bootstrap";
 import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
 import { Carousel } from 'react-responsive-carousel';
 import { useParams } from 'react-router-dom';
-import { getOnePost, getUserInfo } from '../utils/api';
+import { getOnePost, getUserInfo, logout } from '../utils/api';
 import { LazyLoadImage } from "react-lazy-load-image-component";
 
 function IndividualPost(props) {
     const params = useParams();
     const [postInfo, setPostInfo] = useState(null);
     const [userInfo, setUserInfo] = useState(null);
-    const [view, setView] = useState(params.view || null);
+    const [showTipCreation, setShowTipCreation] = useState(false);
+    const [title, setTitle] = useState("");
+    const [subject, setSubject] = useState("");
+    const [anonymous, setAnonymous] = useState(false);
+    const [image, setImage] = useState(null);
 
     useEffect(async () => {
+        if (!params.postId) {
+            console.log(params.postId)
+            alert("Unable to get Listing information. Returning to Listings.");
+            window.location.replace("/");
+            return;
+        }
+        if (props.loggedIn) {
+            const response = await getUserInfo();
+            if (response.ok) {
+                const userData = await response.json();
+                setUserInfo(userData);
+            } else if (response.status === 401) {
+                await logout();
+                window.location.replace('/login');
+                return;
+            } else {
+                setUserInfo(false);
+            }
+        }
         if (params.view === "view") {
             const response = await getOnePost(params.postId);
             if (response.ok && response.status === 200) {
                 const postData = await response.json();
                 setPostInfo(postData.data);
             } else if (response.status === 400) {
-
+                const data = await response.json();
+                alert(data.errorMessage);
+                window.location.replace("/");
+                return;
+            } else if (response.status === 404) {
+                alert("That Listing was not found. Returning to Listings.");
+                window.location.replace('/');
+                return;
+            } else {
+                alert("An Unknown Error has occurred. Returning to Listings.");
+                window.location.replace("/");
+                return;
             }
             const responseUser = await getUserInfo()
             if (responseUser.ok) {
@@ -48,7 +82,7 @@ function IndividualPost(props) {
                 </div>
             )))
         }
-        const images = postInfo.images.map((image, index) => thumbs.push(
+        postInfo.images.map((image, index) => thumbs.push(
             <div>
                 <LazyLoadImage
                     id={postInfo.video ? index + 1 : index}
@@ -68,6 +102,11 @@ function IndividualPost(props) {
         if (divToScrollTo) {
             divToScrollTo.scrollIntoView({ block: "end", inline: "center" });
         }
+    }
+
+    function sendTip(e) {
+        e.preventDefault();
+
     }
 
     return (
@@ -122,9 +161,9 @@ function IndividualPost(props) {
                     <div className="d-flex justify-content-center">
                         <h1 className="fs-1 pt-3 px-3 text-center individualTitle">{postInfo ? postInfo.title : null}</h1>
                     </div>
-                    <div className="individualDiv px-4">
+                    <div className="borderB_grey px-4">
                         <div className="pt-3 d-flex justify-content-between">
-                            <p className="ps-lg-4 pe-2">{postInfo ? "Type of Incident: " + postInfo.categoryId.category : null}</p>
+                            <p className="ps-lg-4 pe-2">{postInfo ? postInfo.subCategory ? postInfo.categoryId.category + " - " + postInfo.subCategory : `${postInfo.categoryId.category}` : null}</p>
                             <p className="pe-lg-4 text-end individualInfoDivs">{postInfo ? "Created by: " + postInfo.userId.username : null}</p>
                         </div>
                         <div className="pt-3 d-flex justify-content-between">
@@ -132,7 +171,7 @@ function IndividualPost(props) {
                             <p className="pe-lg-4 text-end individualInfoDivs">{postInfo ? "Total Views: " + postInfo.views : null}</p>
                         </div>
                     </div>
-                    <div className="d-flex justify-content-center individualDiv">
+                    <div className="d-flex justify-content-center borderB_grey">
                         <p className="fs-5 pt-3 px-3">{postInfo ? postInfo.summary : null}</p>
                     </div>
                 </Row>
@@ -141,8 +180,8 @@ function IndividualPost(props) {
                         <h2 className="pt-2 ps-md-4 ps-2">Tips</h2>
                     </Col>
                     <Col xs={10} className='d-flex justify-content-end align-items-center'>
-                        {props.loggedIn ? <><p className="pt-3 pe-2"> Know something?</p>
-                            <button className="button mt-2" type="button">Send a Tip</button></> : null}
+                        {props.loggedIn && userInfo && userInfo.username !== postInfo.userId.username ? <><p className="pt-3 pe-2"> Know something?</p>
+                            <button className="button mt-2" type="button" onClick={() => setShowTipCreation(true)}>Send a Tip</button></> : null}
                     </Col>
                 </Row>
                 <Row>
@@ -150,8 +189,8 @@ function IndividualPost(props) {
                         {postInfo ? postInfo.tips.length > 0 ? postInfo.tips.map(tip =>
                             <div className="showTips my-2 " key={tip._id} id={tip._id}>
                                 <div className="d-flex justify-content-between">
-                                    <p className="fs-4 px-3 individualDiv">{tip.title}</p>
-                                    <p className="px-3 pt-1 individualDiv">{tip.createdAt}</p>
+                                    <p className="fs-4 px-3 borderB_grey">{tip.title}</p>
+                                    <p className="px-3 pt-1 borderB_grey">{tip.createdAt}</p>
                                 </div>
                                 <p className=" ps-3">{tip.subject}</p>
                                 <div className="d-flex justify-content-end">
@@ -170,11 +209,63 @@ function IndividualPost(props) {
                                         <p className="text-center fs-1 mt-4">No Tips Found, be the first!</p>
                                     </Row>
                                 </Container>
-                            </div> 
-                        : null}
+                            </div>
+                            : null}
                     </div>
                 </Row>
             </Container>
+            <Modal size="lg" centered show={showTipCreation} onHide={() => {
+                setShowTipCreation(false);
+            }}>
+                <Modal.Header closeButton className="modalForm" style={{ borderBottom: "5px solid var(--cyan)" }}>
+                    <Modal.Title >Send A Tip</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="modalForm py-0">
+                    <Container fluid>
+                        <Row>
+                            <p className="text-center my-2 borderB_cyan">This is not a comment section, please only send a tip if you think you have information that could help Identify the individual(s) involved.</p>
+                        </Row>
+                        <Row>
+                            <Col xs={12} as="form" className="editAccountForm" onSubmit={(e) => sendTip(e)}>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="title" >Title:</label>
+                                        <input type="text" id="Title" className="text-center modalFormInput" minLength={4}
+                                            maxLength={50} placeholder="Title" valid
+                                            onChange={(e) => setTitle(e.target.value)}>
+                                        </input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <textarea id="subject" value={subject} placeholder="Subject" style={{ width: "100%" }} className="px-2"
+                                            minLength={12} maxLength={1000} rows="8" onChange={(e) => setSubject(e.target.value)}></textarea>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex">
+                                        <label htmlFor="image" >Image Upload:</label>
+                                        <input type="file" id="image" accept=".jpg, .png, .jpeg" value={image} className="modalFormInput"
+                                            onChange={(e) => setImage(e.target.value)}></input>
+                                    </div>
+                                </Row>
+                                <Row className="my-3 d-flex">
+                                    <div className="d-flex align-items-center">
+                                        <label htmlFor="anonymous" className="" >Would you like to remain Anonymous?:</label>
+                                        <div className="form-check form-switch ms-auto" style={{border: "none"}}>
+                                            <input type="checkbox" id="anonymous" value={anonymous} className="form-check-input px-3 fs-4"
+                                                onChange={(e) => setAnonymous(e.target.value)}></input>
+                                        </div>
+                                    </div>
+                                </Row>
+                                <Row className="d-flex justify-content-center align-items-center my-3 pb-1">
+                                    <button type="submit" className="button" style={{ maxWidth: "75%" }}>Apply Changes</button>
+                                </Row>
+                            </Col>
+                        </Row>
+                    </Container>
+                </Modal.Body>
+            </Modal>
         </Container>
     );
 }

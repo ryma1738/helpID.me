@@ -257,10 +257,10 @@ const Navigator = (props) => {
                 setPassword("");
                 setConfirmPassword("");
             }}>
-                <Modal.Header closeButton className="editAccountModal" style={{ borderBottom: "5px solid var(--cyan)" }}>
+                <Modal.Header closeButton className="modalForm" style={{ borderBottom: "5px solid var(--cyan)" }}>
                     <Modal.Title >Your Account Info</Modal.Title>
                 </Modal.Header>
-                <Modal.Body className="editAccountModal py-0">
+                <Modal.Body className="modalForm py-0">
                     <Container fluid>
                         <Row>
                             <Col xs={12} as="form" className="editAccountForm" onSubmit={(e) => applyChanges(e)}>
@@ -268,7 +268,7 @@ const Navigator = (props) => {
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="username" >Update Username:</label>
-                                        <input type="username" id="username" className="text-center" minLength={4}
+                                        <input type="username" id="username" className="text-center modalFormInput" minLength={4}
                                             maxLength={40} placeholder={username} valid
                                             onChange={(e) => setUsername(e.target.value)}>
                                         </input>
@@ -277,28 +277,28 @@ const Navigator = (props) => {
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="phoneNumber" >Update Phone #:</label>
-                                        <input type="tel" id="phoneNumber" className="text-center" value={phoneNumber} placeholder={phoneNumber ? phoneNumber : "888-888-8888"}
+                                        <input type="tel" id="phoneNumber" className="text-center modalFormInput" value={phoneNumber} placeholder={phoneNumber ? phoneNumber : "888-888-8888"}
                                             minLength={12} maxLength={12} onChange={(e) => setPhoneNumber(createPhoneNumber(e.target.value, phoneNumber))}></input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="email" >Update Email:</label>
-                                        <input type="email" id="email" className="text-center" minLength={10} maxLength={40}
+                                        <input type="email" id="email" className="text-center modalFormInput" minLength={10} maxLength={40}
                                             placeholder={email} onChange={(e) => setEmail(e.target.value)}></input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="password" >Update Password:</label>
-                                        <input type="password" id="password" className="text-center" minLength={6} maxLength={25}
+                                        <input type="password" id="password" className="text-center modalFormInput" minLength={6} maxLength={25}
                                             placeholder="Password" onChange={(e) => setPassword(e.target.value)}></input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="passwordConfirm" >Confirm Password:</label>
-                                        <input type="password" id="passwordConfirm" className="text-center" minLength={6} maxLength={25}
+                                        <input type="password" id="passwordConfirm" className="text-center modalFormInput" minLength={6} maxLength={25}
                                             placeholder="Confirm Password" onChange={(e) => setConfirmPassword(e.target.value)}></input>
                                     </div>
                                 </Row>
