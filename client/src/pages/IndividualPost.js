@@ -26,7 +26,7 @@ function IndividualPost(props) {
                 const userData = await responseUser.json();
                 setUserInfo(userData); // This will be used to add an edit button to the users post if they are just viewing it.
             }
-        } else if (params.view === "edit") { 
+        } else if (params.view === "edit") {
 
         } else {
             window.location.replace("/listing/view/" + params.postId);
@@ -42,7 +42,7 @@ function IndividualPost(props) {
                     <img
                         alt={postInfo.video}
                         key={postInfo.video}
-                        src={"http://LazyLoadImage.youtube.com/vi/" + postInfo.video.split("embed/")[1] + "/0.jpg"}
+                        src={"https://i.ytimg.com/vi/" + postInfo.video.split("embed/")[1] + "/maxresdefault.jpg"}
                         className="carouselThumbs"
                     />
                 </div>
@@ -66,63 +66,115 @@ function IndividualPost(props) {
         // credit: https://stackoverflow.com/questions/51403628/react-scroll-component-to-view-inside-overflow-hidden-element
         const divToScrollTo = document.getElementById(index);
         if (divToScrollTo) {
-            divToScrollTo.scrollIntoView();
+            divToScrollTo.scrollIntoView({ block: "end", inline: "center" });
         }
     }
 
     return (
-        <Container fluid>
-            <Row>
-                {postInfo ? postInfo.video ? 
-                    <Carousel autoPlay={false} showArrows={true} infiniteLoop={true} 
-                    className="imageCarousel p-0" renderThumbs={renderThumbNails}
-                    onChange={(index, item) => thumbScrollChange(index, item)}>
-                    <div>
-                        <iframe src={postInfo.video}
-                            title="YouTube video player"
-                            id="YouTube"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                            className="carouselImages">
-                        </iframe>
-                            {/*  */}
+        <Container fluid="xxl" className="p-0">
+            <Container fluid className="individualContainer">
+                <Row>
+                    {postInfo ? postInfo.video ?
+                        <Carousel autoPlay={false} showArrows={true} infiniteLoop={true}
+                            className="imageCarousel p-0" renderThumbs={renderThumbNails}
+                            onChange={(index, item) => thumbScrollChange(index, item)}>
+                            <div className="carouselVideoDiv">
+                                <iframe src={postInfo.video}
+                                    title="YouTube video player"
+                                    id="YouTube"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                    className="carouselVideo">
+                                </iframe>
+                                {/*  */}
+                            </div>
+                            {postInfo.images.map(image => (
+                                <div>
+                                    <LazyLoadImage
+                                        alt={"https://" + window.location.hostname + image}
+                                        src={image}
+                                        className="carouselImages"
+                                    />
+                                </div>
+                            ))}
+
+                        </Carousel> :
+                        <Carousel autoPlay={false} showArrows={true} infiniteLoop={true}
+                            className="imageCarousel p-0" renderThumbs={renderThumbNails}
+                            onChange={(index, item) => thumbScrollChange(index, item)}>
+                            {postInfo.images.map(image => (
+                                <div>
+                                    <LazyLoadImage
+                                        alt={image}
+                                        src={image}
+                                        className="carouselImages"
+                                    />
+                                </div>
+                            ))}
+                        </Carousel> :
+                        <div className="d-flex justify-content-center">
+                            <Spinner animation="border" role="status" style={{ width: "75px", height: "75px", marginTop: "10vh" }}>
+                                <span className="visually-hidden">Loading...</span>
+                            </Spinner>
+                        </div>}
+                </Row>
+                <Row>
+                    <div className="d-flex justify-content-center">
+                        <h1 className="fs-1 pt-3 px-3 text-center individualTitle">{postInfo ? postInfo.title : null}</h1>
                     </div>
-                    {postInfo.images.map(image => (
-                        <div>
-                            <LazyLoadImage
-                                alt={"https://" + window.location.hostname + image}
-                                src={image}
-                                className="carouselImages"
-                            />
+                    <div className="individualDiv px-4">
+                        <div className="pt-3 d-flex justify-content-between">
+                            <p className="ps-lg-4 pe-2">{postInfo ? "Type of Incident: " + postInfo.categoryId.category : null}</p>
+                            <p className="pe-lg-4 text-end individualInfoDivs">{postInfo ? "Created by: " + postInfo.userId.username : null}</p>
                         </div>
-                    ))}
-                    
-                </Carousel> :
-                    <Carousel autoPlay={false} showArrows={true} infiniteLoop={true} 
-                    className="imageCarousel p-0" renderThumbs={renderThumbNails}
-                    onChange={(index, item) => thumbScrollChange(index, item)}>
-                    {postInfo.images.map(image => (
-                        <div>
-                            <LazyLoadImage
-                                alt={image}
-                                src={image}
-                                className="carouselImages"
-                            />
+                        <div className="pt-3 d-flex justify-content-between">
+                            <p className="ps-lg-4 pe-2">{postInfo ? "Date of Incident: " + postInfo.date : null}</p>
+                            <p className="pe-lg-4 text-end individualInfoDivs">{postInfo ? "Total Views: " + postInfo.views : null}</p>
                         </div>
-                    ))}
-                </Carousel> : 
-                <div className="d-flex justify-content-center">
-                    <Spinner animation="border" role="status" style={{ width: "75px", height: "75px", marginTop: "10vh" }}>
-                        <span className="visually-hidden">Loading...</span>
-                    </Spinner>
-                </div>}
-            </Row>
-            <Row>
-
-            </Row>
-            <Row>
-
-            </Row>
+                    </div>
+                    <div className="d-flex justify-content-center individualDiv">
+                        <p className="fs-5 pt-3 px-3">{postInfo ? postInfo.summary : null}</p>
+                    </div>
+                </Row>
+                <Row className="pb-2" style={{ borderBottom: '4px solid var(--cyan)' }}>
+                    <Col xs={2} >
+                        <h2 className="pt-2 ps-md-4 ps-2">Tips</h2>
+                    </Col>
+                    <Col xs={10} className='d-flex justify-content-end align-items-center'>
+                        {props.loggedIn ? <><p className="pt-3 pe-2"> Know something?</p>
+                            <button className="button mt-2" type="button">Send a Tip</button></> : null}
+                    </Col>
+                </Row>
+                <Row>
+                    <div className="px-md-5 px-xs-3">
+                        {postInfo ? postInfo.tips.length > 0 ? postInfo.tips.map(tip =>
+                            <div className="showTips my-2 " key={tip._id} id={tip._id}>
+                                <div className="d-flex justify-content-between">
+                                    <p className="fs-4 px-3 individualDiv">{tip.title}</p>
+                                    <p className="px-3 pt-1 individualDiv">{tip.createdAt}</p>
+                                </div>
+                                <p className=" ps-3">{tip.subject}</p>
+                                <div className="d-flex justify-content-end">
+                                    <p className="text-end px-3 mb-0 pb-1 tipUsername">By: {tip.userId.username}</p>
+                                </div>
+                            </div>)
+                            : <div className="d-flex justify-content-center align-items-center" key="None Found" style={{ minHeight: "30vh" }}>
+                                <Container fluid>
+                                    <Row>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                                            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+                                        </svg>
+                                    </Row>
+                                    <Row>
+                                        <p className="text-center fs-1 mt-4">No Tips Found, be the first!</p>
+                                    </Row>
+                                </Container>
+                            </div> 
+                        : null}
+                    </div>
+                </Row>
+            </Container>
         </Container>
     );
 }

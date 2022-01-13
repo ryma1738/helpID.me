@@ -232,7 +232,7 @@ const Main = (props) => {
             setPosts(postData.posts.map(post => {
                 console.log(post.data.images)
                 return (
-                    <Col lg={6} md={12} className="p-2" key={post.data._id}>
+                    <Col xl={4} lg={6} className="p-2" key={post.data._id}>
                         <div className="postCards" onClick={() => singlePost(post.data._id)}>
                             <Row className="d-flex justify-content-center postCardsImageDiv">
                                 {post.data.images ? (
@@ -258,7 +258,7 @@ const Main = (props) => {
                             </Row>
                             <Row className="" style={{ position: "absolute", bottom: '0px', center: "0px", width: "100%" }}>
                                 <Col xs={7}>
-                                    <p className="text-start ps-2"> Posted by: {post.data.userId.username}</p>
+                                    <p className="text-start ps-2 "> Posted by: {post.data.userId.username}</p>
                                 </Col>
                                 <Col xs={5}>
                                     <p className="text-end"> Views: {post.data.views}</p>
@@ -356,10 +356,10 @@ const Main = (props) => {
     return (
         <Container fluid className="" style={{minHeight: "80vh"}}>
             <Row>
-                <Col xxl={2} xs={12}>
-                {/* Ad Space */}
+                <Col xxl={1} xs={12}>
+                    {/* Ad Space */}
                 </Col>
-                <Col xxl={8} xs={12}>
+                <Col>
                     <Row className="d-flex justify-content-center align-items-center mt-3 mapRow" style={{height: "30vh"}}>
                         {mainMap}
                     </Row>
@@ -468,7 +468,7 @@ const Main = (props) => {
                     </Row>
                 {/* main */}
                 </Col>
-                <Col xxl={2} xs={12}>
+                <Col xxl={1} xs={12}>
                     {/* Ad Space */}
                 </Col>
             </Row>

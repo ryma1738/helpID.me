@@ -98,6 +98,9 @@ const tipControllers = {
                         return res.status(400).json({ errorMessage: "The title and subject of the tip are required!" })
                     }
                     if (err.errors.subject) {
+                        if (err.errors.subject.properties.type === "maxlength") {
+                            return res.status(400).json({ errorMessage: "The subject of the tip can not exceed 1000 characters in length!" })
+                        }
                         return res.status(400).json({ errorMessage: "The subject of the tip is required!" })
                     }
                     if (err.errors.title) {

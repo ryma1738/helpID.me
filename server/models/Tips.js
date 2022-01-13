@@ -8,7 +8,8 @@ const tipSchema = new Schema(
         },
         subject: {
             type: String,
-            required: true
+            required: true,
+            maxlength: 1000
         },
         userId: {
             type: Types.ObjectId,

@@ -42,10 +42,10 @@ function App() {
     <BrowserRouter as='main'>
       <Navigator loggedIn={loggedIn}/>
       <Routes>
-        <Route exact path='/' element={<Main />} />
-        <Route exact path='/login' loggedIn={loggedIn} element={<Login />} />
-        <Route exact path='/signup' loggedIn={loggedIn} element={<Signup />} />
-        <Route path="/listing/:view/:postId" element={<IndividualPost />} />
+        <Route path='/' element={<Main />} />
+        <Route path='/login' loggedIn={loggedIn} element={<Login />} />
+        <Route path='/signup' loggedIn={loggedIn} element={<Signup />} />
+        <Route path="/listing/:view/:postId" element={<IndividualPost loggedIn={loggedIn}/>} />
       </Routes>
       {/* <Footer /> */}
     </BrowserRouter>

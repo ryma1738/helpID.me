@@ -212,7 +212,7 @@ background-color: var(--grey);
   padding-left: 10px !important;
   padding-right: 10px !important;
   padding-bottom: 5px !important;
-  overflow-x: scroll !important;
+  overflow-x: auto !important;
 }
 
 .thumb {
@@ -239,8 +239,50 @@ background-color: var(--grey);
   object-fit: contain;
   padding: 0;
 }
+.carouselVideoDiv {
+  position: relative;
+  width: 100%;
+  max-height: 40vh;
+  padding-bottom: 40vh;
+}
 
+.carouselVideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 40vh;
+}
+/* Individual post styles */
 
+.individualTitle {
+  border-bottom: 2px solid var(--grey);
+}
+
+.individualSubject {
+  border-bottom: 1px solid var(--grey);
+}
+
+.individualDiv {
+  border-bottom: 2px solid var(--grey);
+}
+
+.individualInfoDivs {
+  width: 25vw;
+}
+
+.showTips {
+  box-shadow: 1px 1px 5px var(--cyan);
+  border: 2px solid var(--jet);
+  border-radius: 5px;
+}
+
+.tipUsername {
+  border-top: 2px solid var(--jet);
+  border-left: 2px solid var(--jet);
+  border-top-left-radius: 5px;
+}
 /* --------------------------------------- */
 /* ----- Media Queries ----- */
 /* --------------------------------------- */
@@ -260,6 +302,11 @@ background-color: var(--grey);
   .postCards {
     height: 590px;
   }
+  .thumb {
+    max-height: 15vh;
+    min-width: 25vw !important;
+    max-width: 30vw !important;
+  }
 }
 
 @media screen and (max-width: 768px) { /* md */
@@ -275,14 +322,20 @@ background-color: var(--grey);
     border-right: none;
   }
   .carouselImages {
-  height: 50vh;
+    height: 50vh;
   }
-  .thumb {
-  max-height: 15vh;
-  min-width: 25vw !important;
-  max-width: 30vw !important;
-}
-
+  .individualInfoDivs {
+    width: 35vw;
+  }
+  .carouselImages {
+    height: 30vh;
+  }
+  .carouselVideoDiv {
+    padding-bottom: 30vh;
+  }
+  .carouselVideo {
+    max-height: 40vh;
+  }
 }
 
 @media screen and (max-width: 576px) { /* sm */
@@ -292,9 +345,14 @@ background-color: var(--grey);
   .postCardsImageDiv {
     max-height: 250px;
   }
+  .thumb {
+    max-height: 15vh;
+    min-width: 35vw !important;
+    max-width: 45vw !important;
+  }
 }
 
-@media screen and (min-width: 1600px) { /* xxl */
+@media screen and (min-width: 1400px) { /* xxl */
   .postCardsImage {
     height: 300px;
   }
@@ -303,6 +361,18 @@ background-color: var(--grey);
   }
   .postCards {
     height: 550px;
+  }
+  .individualContainer {
+    border-left: 5px solid var(--cyan);
+    border-right: 5px solid var(--cyan);
+  }
+  .thumb {
+    max-height: 15vh;
+    min-width: 10vw !important;
+    max-width: 15vw !important;
+  }
+  .individualInfoDivs {
+    width: auto;
   }
 }
 

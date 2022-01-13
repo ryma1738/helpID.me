@@ -1,7 +1,7 @@
 const { Post, Category, Tip } = require("../models");
 const fs = require('fs');
 const path = require('path');
-const { encodeImage, encodeImages, encodeSingleImage, addImages, removeImages, format_date } = require('../utils/helpers')
+const { addImages, removeImages, format_date } = require('../utils/helpers')
 const zipCodes = require("../utils/zipCodes.json");
 
 function removeTempImages(req) {
@@ -182,7 +182,7 @@ const postControllers = {
             .populate({
                 path: "tips",
                 model: "Tip",
-                select: "_id title subject userId anonymous",
+                select: "_id title subject userId anonymous createdAt",
                 populate: { path: "userId", model: "User", select: "username" }
             })
             .populate('categoryId', "_id category")
@@ -195,26 +195,23 @@ const postControllers = {
                 delete postData.userId._id;
                 delete postData.userId.id;
                 for (let i = 0; i < postData.tips.length; i++) {
-                    if (postData.tips[i].image) {
-                        postData.tips[i].image = {
-                            data: encodeSingleImage(postData.tips[i].image.data) // encode tips images
-                        }
-                    } if (postData.tips[i].anonymous === true) {
-                        postData.tips[i].userId.userName = "Anonymous";
+                    if (postData.tips[i].anonymous === true) {
+                        postData.tips[i].userId.username = "Anonymous";
                     }
+                    postData.tips[i].createdAt = format_date(postData.tips[i].createdAt);
                     delete postData.tips[i].anonymous;
                     delete postData.tips[i].userId._id;
                     delete postData.tips[i].userId.id;
                 }
                 delete postData.id;
-                res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived() })
+                res.status(200).json({ data: postData, totalTips: postDataObject.tipsReceived() });
             })
             .catch(err => {
                 if (err.name === "CastError") {
                     res.status(404).json({ errorMessage: "Post not found" });
                 } else {
                     console.log(err);
-                    res.sendStatus(500);
+                    res.status(500).json({ errorMessage: "Unknown Error", error: err, errMessage: err.message })
                 }
             });
     },
@@ -396,7 +393,7 @@ const postControllers = {
                         return res.status(400).json({ errorMessage: "Video link must be a valid youtube link" });
                     } if (err.errors.summary) {
                         if (err.errors.summary.properties.type === "maxlength") {
-                            return res.status(400).json({ errorMessage: "Your summary can not exceed 400 characters long" });
+                            return res.status(400).json({ errorMessage: "Your summary can not exceed 2000 characters long" });
                         } if (err.errors.summary.properties.type === "required") {
                             return res.status(400).json({ errorMessage: "You must have a summary for your post" });
                         }
