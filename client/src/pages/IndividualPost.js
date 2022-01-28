@@ -3,8 +3,9 @@ import { Col, Container, Row, Spinner, Modal } from "react-bootstrap";
 import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
 import { Carousel } from 'react-responsive-carousel';
 import { useParams } from 'react-router-dom';
-import { getOnePost, getUserInfo, logout } from '../utils/api';
+import { getOnePost, getUserInfo, logout, createTip } from '../utils/api';
 import { LazyLoadImage } from "react-lazy-load-image-component";
+
 
 function IndividualPost(props) {
     const params = useParams();
@@ -14,7 +15,7 @@ function IndividualPost(props) {
     const [title, setTitle] = useState("");
     const [subject, setSubject] = useState("");
     const [anonymous, setAnonymous] = useState(false);
-    const [image, setImage] = useState(null);
+    const [image, setImage] = useState(false);
 
     useEffect(async () => {
         if (!params.postId) {
@@ -36,34 +37,28 @@ function IndividualPost(props) {
                 setUserInfo(false);
             }
         }
-        if (params.view === "view") {
-            const response = await getOnePost(params.postId);
-            if (response.ok && response.status === 200) {
-                const postData = await response.json();
-                setPostInfo(postData.data);
-            } else if (response.status === 400) {
-                const data = await response.json();
-                alert(data.errorMessage);
-                window.location.replace("/");
-                return;
-            } else if (response.status === 404) {
-                alert("That Listing was not found. Returning to Listings.");
-                window.location.replace('/');
-                return;
-            } else {
-                alert("An Unknown Error has occurred. Returning to Listings.");
-                window.location.replace("/");
-                return;
-            }
-            const responseUser = await getUserInfo()
-            if (responseUser.ok) {
-                const userData = await responseUser.json();
-                setUserInfo(userData); // This will be used to add an edit button to the users post if they are just viewing it.
-            }
-        } else if (params.view === "edit") {
-
+        const response = await getOnePost(params.postId);
+        if (response.ok && response.status === 200) {
+            const postData = await response.json();
+            setPostInfo(postData.data);
+        } else if (response.status === 400) {
+            const data = await response.json();
+            alert(data.errorMessage);
+            window.location.replace("/");
+            return;
+        } else if (response.status === 404) {
+            alert("That Listing was not found. Returning to Listings.");
+            window.location.replace('/');
+            return;
         } else {
-            window.location.replace("/listing/view/" + params.postId);
+            alert("An Unknown Error has occurred. Returning to Listings.");
+            window.location.replace("/");
+            return;
+        }
+        const responseUser = await getUserInfo()
+        if (responseUser.ok) {
+            const userData = await responseUser.json();
+            setUserInfo(userData); // This will be used to add an edit button to the users post if they are just viewing it.
         }
     }, [])
 
@@ -104,9 +99,28 @@ function IndividualPost(props) {
         }
     }
 
-    function sendTip(e) {
+    async function sendTip(e) {
         e.preventDefault();
-
+        let formData = new FormData();
+        formData.append("title", title);
+        formData.append("subject", subject);
+        formData.append("anonymous", anonymous);
+        formData.append("id", postInfo._id);
+        if (image) {
+            const fileInput = document.querySelector("#image");
+            formData.append("image", fileInput.files[0]); 
+        }
+        
+        const response = await createTip(formData);
+        console.log(response);
+        if (response.ok) {
+            setShowTipCreation(false);
+            const tipData = await response.json();
+            alert(tipData);
+        } else {
+            const tipData = await response.json();
+            console.log(tipData, "error");
+        }
     }
 
     return (
@@ -231,7 +245,7 @@ function IndividualPost(props) {
                                     <div className="d-flex">
                                         <label htmlFor="title" >Title:</label>
                                         <input type="text" id="Title" className="text-center modalFormInput" minLength={4}
-                                            maxLength={50} placeholder="Title" valid
+                                            maxLength={50} placeholder="Title" valid required
                                             onChange={(e) => setTitle(e.target.value)}>
                                         </input>
                                     </div>
@@ -239,14 +253,14 @@ function IndividualPost(props) {
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <textarea id="subject" value={subject} placeholder="Subject" style={{ width: "100%" }} className="px-2"
-                                            minLength={12} maxLength={1000} rows="8" onChange={(e) => setSubject(e.target.value)}></textarea>
+                                            minLength={12} maxLength={1000} rows="8" onChange={(e) => setSubject(e.target.value)} required></textarea>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="image" >Image Upload:</label>
-                                        <input type="file" id="image" accept=".jpg, .png, .jpeg" value={image} className="modalFormInput"
-                                            onChange={(e) => setImage(e.target.value)}></input>
+                                        <input type="file" id="image" accept=".jpg, .png, .jpeg" className="modalFormInput"
+                                            onChange={(e) => setImage(!image)}></input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">

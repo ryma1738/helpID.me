@@ -41,6 +41,7 @@ const tipControllers = {
         Tip.create([{
             title: req.body.title,
             subject: req.body.subject,
+            anonymous: req.body.anonymous,
             userId: req.user._id,
             postId: req.body.id,
         }], { new: true, runValidators: true })
@@ -62,8 +63,7 @@ const tipControllers = {
                 }
                 Tip.findOne({ _id: data[0]._id }).select("_id postId id").then(tipData => {
                     Post.findByIdAndUpdate(req.body.id, { $push: { tips: tipData._id } }, { new: true, runValidators: true }).lean()
-                        .then(postData => {
-                            console.log(postData.title)  
+                        .then(postData => { 
                                 Notification.create([{ //create notification for user so they know they got a tip
                                     message: "Someone sent a tip to your post: " + postData.title,
                                     postId: req.body.id

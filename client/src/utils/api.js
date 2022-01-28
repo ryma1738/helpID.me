@@ -136,3 +136,10 @@ export const updateAccount = (username, email, password, phoneNumber) => {
         })
     })
 }
+
+export const createTip = (formData) => {
+    return fetch('/api/tip/', {
+        method: "POST",
+        body: formData
+    })
+}

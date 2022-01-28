@@ -46,7 +46,7 @@ function App() {
         <Route path='/' element={<Main />} />
         <Route path='/login' loggedIn={loggedIn} element={<Login />} />
         <Route path='/signup' loggedIn={loggedIn} element={<Signup />} />
-        <Route path="/listing/:view/:postId" element={<IndividualPost loggedIn={loggedIn}/>} />
+        <Route path="/listing/view/:postId" element={<IndividualPost loggedIn={loggedIn}/>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {/* <Footer /> */}
