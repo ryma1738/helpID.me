@@ -108,19 +108,19 @@ function IndividualPost(props) {
         formData.append("id", postInfo._id);
         if (image) {
             const fileInput = document.querySelector("#image");
-            formData.append("image", fileInput.files[0]); 
+            formData.append("image", fileInput.files[0], fileInput.files[0].filename); 
         }
         
-        const response = await createTip(formData);
-        console.log(response);
-        if (response.ok) {
-            setShowTipCreation(false);
-            const tipData = await response.json();
-            alert(tipData);
-        } else {
-            const tipData = await response.json();
-            console.log(tipData, "error");
-        }
+        // const response = await createTip(formData);
+        // console.log(response);
+        // if (response.ok) {
+        //     setShowTipCreation(false);
+        //     const tipData = await response.json();
+        //     alert(tipData);
+        // } else {
+        //     const tipData = await response.json();
+        //     console.log(tipData, "error");
+        // }
     }
 
     return (
