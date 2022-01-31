@@ -181,10 +181,16 @@ background-color: var(--grey);
   padding: 0;
 }
 .postCardsImageDiv {
-  max-height: 250px;
+  max-height: 200px;
   background: radial-gradient(var(--main-color), gray);
   margin: 0;
+}
 
+.tipImage {
+  max-height: 250px;
+  max-width: 100%;
+  box-shadow: 1px 1px 5px black;
+  object-fit: contain;
 }
 
 .loginDiv {

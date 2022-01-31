@@ -15,7 +15,7 @@ function IndividualPost(props) {
     const [title, setTitle] = useState("");
     const [subject, setSubject] = useState("");
     const [anonymous, setAnonymous] = useState(false);
-    const [image, setImage] = useState(false);
+    const [tipFormError, setTipFormError] = useState(null);
 
     useEffect(async () => {
         if (!params.postId) {
@@ -101,26 +101,29 @@ function IndividualPost(props) {
 
     async function sendTip(e) {
         e.preventDefault();
-        let formData = new FormData();
-        formData.append("title", title);
-        formData.append("subject", subject);
-        formData.append("anonymous", anonymous);
+        setTipFormError(null);
+        let myForm = document.getElementById("tipForm");
+        let formData = new FormData(myForm);
         formData.append("id", postInfo._id);
-        if (image) {
-            const fileInput = document.querySelector("#image");
-            formData.append("image", fileInput.files[0], fileInput.files[0].filename); 
-        }
         
-        // const response = await createTip(formData);
-        // console.log(response);
-        // if (response.ok) {
-        //     setShowTipCreation(false);
-        //     const tipData = await response.json();
-        //     alert(tipData);
-        // } else {
-        //     const tipData = await response.json();
-        //     console.log(tipData, "error");
-        // }
+        const response = await createTip(formData);
+        console.log(response);
+        if (response.ok) {
+            setShowTipCreation(false);
+            const tipData = await response.json();
+            alert(tipData);
+        } 
+        else if (response.status === 400) {
+            const error = await response.json();
+            if (error.errorMessage === "Your file is too large. The maximum size for a file is 0.5MB") {
+                setTipFormError(error.errorMessage);
+            }
+
+        } 
+        else {
+            const tipData = await response.json();
+            console.log(tipData, "error");
+        }
     }
 
     return (
@@ -199,18 +202,25 @@ function IndividualPost(props) {
                     </Col>
                 </Row>
                 <Row>
-                    <div className="px-md-5 px-xs-3">
+                    <Row className="px-md-4 px-xs-3 d-flex justify-content-center">
                         {postInfo ? postInfo.tips.length > 0 ? postInfo.tips.map(tip =>
-                            <div className="showTips my-2 " key={tip._id} id={tip._id}>
-                                <div className="d-flex justify-content-between">
-                                    <p className="fs-4 px-3 borderB_grey">{tip.title}</p>
-                                    <p className="px-3 pt-1 borderB_grey">{tip.createdAt}</p>
+                            <Col md={6} className="my-2" key={tip._id} id={tip._id}>
+                                <div className="showTips ms-md-3">
+                                    <div className="d-flex justify-content-between">
+                                        <p className="fs-4 px-3 borderB_grey">{tip.title}</p>
+                                        <p className="px-3 pt-1 borderB_grey">{tip.createdAt}</p>
+                                    </div>
+                                    <p className=" ps-3">{tip.subject}</p>
+                                    {tip.image ? 
+                                    <div className="d-flex justify-content-center mx-3">
+                                        <img src={tip.image} className="tipImage mb-3" alt={tip.title}></img>
+                                    </div> 
+                                    : <p>{tip.image}</p>}
+                                    <div className="d-flex justify-content-end">
+                                        <p className="text-end px-3 mb-0 pb-1 tipUsername">By: {tip.userId.username}</p>
+                                    </div>
                                 </div>
-                                <p className=" ps-3">{tip.subject}</p>
-                                <div className="d-flex justify-content-end">
-                                    <p className="text-end px-3 mb-0 pb-1 tipUsername">By: {tip.userId.username}</p>
-                                </div>
-                            </div>)
+                            </Col>)
                             : <div className="d-flex justify-content-center align-items-center" key="None Found" style={{ minHeight: "30vh" }}>
                                 <Container fluid>
                                     <Row>
@@ -225,7 +235,7 @@ function IndividualPost(props) {
                                 </Container>
                             </div>
                             : null}
-                    </div>
+                    </Row>
                 </Row>
             </Container>
             <Modal size="lg" centered show={showTipCreation} onHide={() => {
@@ -240,39 +250,47 @@ function IndividualPost(props) {
                             <p className="text-center my-2 borderB_cyan">This is not a comment section, please only send a tip if you think you have information that could help Identify the individual(s) involved.</p>
                         </Row>
                         <Row>
-                            <Col xs={12} as="form" className="editAccountForm" onSubmit={(e) => sendTip(e)}>
+                            <Col xs={12} as="form" className="editAccountForm" id="tipForm" onSubmit={(e) => sendTip(e)} onChange={ () => setTipFormError(null)}>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="title" >Title:</label>
-                                        <input type="text" id="Title" className="text-center modalFormInput" minLength={4}
+                                        <input type="text" id="title" name="title" className="text-center modalFormInput" minLength={4}
                                             maxLength={50} placeholder="Title" valid required
-                                            onChange={(e) => setTitle(e.target.value)}>
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            onBlur={(e) => {
+                                                if (e.target.value.length < 4) setTipFormError("Your title must be at least 4 characters long.");
+                                            }}>
                                         </input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
-                                        <textarea id="subject" value={subject} placeholder="Subject" style={{ width: "100%" }} className="px-2"
-                                            minLength={12} maxLength={1000} rows="8" onChange={(e) => setSubject(e.target.value)} required></textarea>
+                                        <textarea id="subject" name="subject" value={subject} placeholder="Subject" style={{ width: "100%" }} className="px-2"
+                                            minLength={12} maxLength={1000} rows="8" onChange={(e) => setSubject(e.target.value)} required
+                                            onBlur={(e) => {
+                                                if (e.target.value.length < 12) setTipFormError("Your subject must be at least 12 characters long.");
+                                                if (e.target.value.length > 1000) setTipFormError("Your subject can not exceed 1000 characters long.");
+                                            }}></textarea>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex">
                                         <label htmlFor="image" >Image Upload:</label>
-                                        <input type="file" id="image" accept=".jpg, .png, .jpeg" className="modalFormInput"
-                                            onChange={(e) => setImage(!image)}></input>
+                                        <input type="file" id="image" name="image" accept=".jpg, .png, .jpeg" className="modalFormInput"
+                                        ></input>
                                     </div>
                                 </Row>
                                 <Row className="my-3 d-flex">
                                     <div className="d-flex align-items-center">
                                         <label htmlFor="anonymous" className="" >Would you like to remain Anonymous?:</label>
                                         <div className="form-check form-switch ms-auto" style={{border: "none"}}>
-                                            <input type="checkbox" id="anonymous" value={anonymous} className="form-check-input px-3 fs-4"
-                                                onChange={(e) => setAnonymous(e.target.value)}></input>
+                                            <input type="checkbox" id="anonymous" name="anonymous"  value={anonymous} className="form-check-input px-3 fs-4"
+                                                onChange={(e) => setAnonymous(!anonymous)}></input>
                                         </div>
                                     </div>
                                 </Row>
                                 <Row className="d-flex justify-content-center align-items-center my-3 pb-1">
+                                    {tipFormError ? <p className="text-danger text-center">{tipFormError}</p> : null}
                                     <button type="submit" className="button" style={{ maxWidth: "75%" }}>Apply Changes</button>
                                 </Row>
                             </Col>

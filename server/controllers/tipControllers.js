@@ -4,7 +4,7 @@ const path = require('path');
 
 function removeTempImage(req) {
     if (req.file) {
-        fs.rm(path.join(__dirname + "../../public/temp/" + req.files.filename), {}, (err) => {
+        fs.rm(path.join(__dirname + "../../public/temp/" + req.file.filename), {}, (err) => {
             if (err) {
                 console.log(err);
             }
@@ -47,14 +47,26 @@ const tipControllers = {
         }], { new: true, runValidators: true })
             .then(async data => {
                 if (req.file) {
-                    fs.copyFile(path.join(__dirname + "../../public/temp/" + req.files.filename),
-                        path.join(__dirname + "../../public/" + req.body.id + "/" + req.files.filename), (err) => {
-                            if (err) console.log(err);
-                        });
-                    removeTempImage(req);
+                    fs.readdir(path.join(__dirname + "../../public/"), (err, data) => {
+                        if (err) console.log(err);
+                        if (data.includes(req.body.id)) {
+                            fs.copyFile(path.join(__dirname + "../../public/temp/" + req.file.filename),
+                                path.join(__dirname + "../../public/" + req.body.id + "/" + req.file.filename), (err) => {
+                                    if (err) console.log(err);
+                                });
+                        } else {
+                            fs.mkdirSync(path.join(__dirname + "../../public/" + req.body.id));
+                            fs.copyFile(path.join(__dirname + "../../public/temp/" + req.file.filename),
+                                path.join(__dirname + "../../public/" + req.body.id + "/" + req.file.filename), (err) => {
+                                    if (err) console.log(err);
+                                });
+                        }
+                        removeTempImage(req);
+                    });
+                    
                     try {
                         await Tip.findByIdAndUpdate(data[0]._id,
-                            { image: "/" + req.body.id + "/" + req.files.filename },
+                            { image: "/" + req.body.id + "/" + req.file.filename },
                             { new: true, runValidators: true }).lean();
                     } catch (err) {
                         await Tip.findByIdAndDelete(data[0]._id);
@@ -122,12 +134,12 @@ const tipControllers = {
         }
         if (req.file) {
             const tipData = await Tip.findById(req.body.id).lean();
-            fs.copyFile(path.join(__dirname + "../../public/temp/" + req.files.filename),
-                path.join(__dirname + "../../public/" + tipData.postId + "/" + req.files.filename), (err) => {
+            fs.copyFile(path.join(__dirname + "../../public/temp/" + req.file.filename),
+                path.join(__dirname + "../../public/" + tipData.postId + "/" + req.file.filename), (err) => {
                     if (err) console.log(err);
                 });
             removeTempImage(req);
-            data.image = "/" + tipData.postId + "/" + req.files.filename;
+            data.image = "/" + tipData.postId + "/" + req.file.filename;
         }
         if (req.body.title) {
             data.title = req.body.title
@@ -149,7 +161,7 @@ const tipControllers = {
                 res.status(200).json({ message: "Tip updated successfully" });
             })
             .catch(err => {
-                fs.rm(path.join(__dirname + "../../public/" + tipData.postId + "/" + req.files[index].filename), {}, (err) => {
+                fs.rm(path.join(__dirname + "../../public/" + tipData.postId + "/" + req.file[index].filename), {}, (err) => {
                     if (err) {
                         console.log(err);
                     }

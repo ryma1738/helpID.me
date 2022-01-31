@@ -182,7 +182,7 @@ const postControllers = {
             .populate({
                 path: "tips",
                 model: "Tip",
-                select: "_id title subject userId anonymous createdAt",
+                select: "_id title subject userId anonymous createdAt image",
                 populate: { path: "userId", model: "User", select: "username" }
             })
             .populate('categoryId', "_id category")
