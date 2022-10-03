@@ -24,6 +24,9 @@ function Login(props) {
             alert("An unknown error has occurred, please try again later!")
         }
     }
+    useEffect(async () => {
+
+    }, [])
 
     useEffect(() => {
         if (props.loggedIn) {

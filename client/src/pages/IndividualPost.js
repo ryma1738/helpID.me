@@ -19,7 +19,7 @@ function IndividualPost(props) {
 
     useEffect(async () => {
         if (!params.postId) {
-            console.log(params.postId)
+            
             alert("Unable to get Listing information. Returning to Listings.");
             window.location.replace("/");
             return;
@@ -118,7 +118,6 @@ function IndividualPost(props) {
             if (error.errorMessage === "Your file is too large. The maximum size for a file is 0.5MB") {
                 setTipFormError(error.errorMessage);
             }
-
         } 
         else {
             const tipData = await response.json();
@@ -203,6 +202,7 @@ function IndividualPost(props) {
                 </Row>
                 <Row>
                     <Row className="px-md-4 px-xs-3 d-flex justify-content-center">
+                        
                         {postInfo ? postInfo.tips.length > 0 ? postInfo.tips.map(tip =>
                             <Col md={6} className="my-2" key={tip._id} id={tip._id}>
                                 <div className="showTips ms-md-3">

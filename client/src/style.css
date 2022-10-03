@@ -181,7 +181,7 @@ background-color: var(--grey);
   padding: 0;
 }
 .postCardsImageDiv {
-  max-height: 200px;
+  max-height: 250px;
   background: radial-gradient(var(--main-color), gray);
   margin: 0;
 }
@@ -347,6 +347,9 @@ background-color: var(--grey);
 @media screen and (max-width: 576px) { /* sm */
   .postCardsImage {
     max-height: 250px;
+  }
+  .postCards {
+    height: 490px;
   }
   .postCardsImageDiv {
     max-height: 250px;
